@@ -72,6 +72,11 @@ define cleanup
 	$(if $(BEAMER_PDFLATEX), $(LATEXMK) -C, )
 endef
 
+define install_deps
+	$(R) $(ROPTS) -e "install.packages('remotes', repos = 'https://cran.rstudio.com')"
+	$(R) $(ROPTS) -e "remotes::install_deps()"
+endef
+
 define pdflatex
 	$(LATEXMK) $(LATEXMKOPTS_PDFLATEX) -pdflatex="${PDFLATEX_OUTPUT}" 			\
 	-outdir='$@' $<

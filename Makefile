@@ -22,13 +22,18 @@ DIRS	=	class02																\
 #			class21																\
 #			class22
 
-.PHONY	:	clean all $(DIRS)
+.PHONY	:	clean env all $(DIRS)
 
 all	:	$(BUILD_DIR) $(DIRS)
 
 clean	:
 	$(ECHO) Currently in $(CURDIR)
 	$(foreach dir,$(DIRS),cd $(dir) && $(MAKE) clean && cd ../;)
+
+env	:
+	$(ECHO) Installing R dependencies in DESCRIPTION file...
+	$(call install_deps)
+	$(ECHO) Installation of R dependencies complete
 
 $(DIRS)	:
 	$(ECHO) Currently in $(CURDIR)
