@@ -7,13 +7,13 @@ date: May 24, 2018
 class: center, middle, title-slide
 
 .upper-right[
-```{r logo, eval = TRUE, echo = FALSE, out.width = "605px"}
+```{r logo, echo = FALSE, out.width = "605px"}
 knitr::include_graphics("../img/cds-101-a01-logo.png")
 ```
 ]
 
 .lower-right[
-```{r cc-by-sa, eval = TRUE, echo = FALSE, out.width = "88px"}
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
 knitr::include_graphics("../img/cc-by-sa.png")
 ```
 
@@ -33,10 +33,7 @@ class: middle, center, inverse
 
 ```{r setup, include = FALSE}
 # DO NOT ALTER THIS CHUNK
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.width = 5,
-                      fig.asp = 0.618, out.width = "70%", dpi = 120,
-                      fig.align = "center", cache = FALSE)
-options(htmltools.dir.version = FALSE)
+source("../src/xaringan_setup.R")
 # Load required packages
 suppressPackageStartupMessages(library(tidyverse, quietly = TRUE))
 ```
@@ -74,7 +71,7 @@ Data collected on students in a data science class on a variety of variables:
 
 # Types of variables
 
-```{r types-of-variables}
+```{r types-of-variables, echo = FALSE}
 knitr::include_graphics("../img/variables.svg")
 ```
 
@@ -138,7 +135,7 @@ class: middle, center, inverse
 
 .qa[Does there appear to be a relationship between GPA and number of hours students study per week?]
 
-```{r gpa-study-hours}
+```{r gpa-study-hours, echo = FALSE}
 knitr::include_graphics("../img/gpa_study_hours.svg")
 ```
 
@@ -161,7 +158,7 @@ class: middle, center, inverse
 
 .qa[Based on the following scatterplot, which of the following statements is correct about the head and skull lengths of possums?]
 
-```{r possum-head-skull, out.width = "45%"}
+```{r possum-head-skull, out.width = "45%", echo = FALSE}
 knitr::include_graphics("../img/possum_head_skull.svg")
 ```
 
@@ -327,7 +324,7 @@ class: middle, center, inverse
 
 # .font90[Effective presentations ↔ effective visuals]
 
-```{r steve_jobs, out.height = "400px"}
+```{r steve_jobs, out.height = "400px", echo = FALSE}
 knitr::include_graphics("../img/steve_jobs.jpg")
 ```
 
@@ -337,7 +334,7 @@ knitr::include_graphics("../img/steve_jobs.jpg")
 
 # .font90[Visualizations can lead to comprehension...]
 
-```{r fallen_ww2, out.height = "400px"}
+```{r fallen_ww2, out.height = "400px", echo = FALSE}
 knitr::include_graphics("../img/fallen_of_ww2.png")
 ```
 
@@ -347,7 +344,7 @@ knitr::include_graphics("../img/fallen_of_ww2.png")
 
 # ...or to confusion
 
-```{r nytimes_movies, out.width = "600px"}
+```{r nytimes_movies, out.width = "600px", echo = FALSE}
 knitr::include_graphics("../img/2008-02-23_nytimes_movies_gross_earnings.png")
 ```
 
@@ -379,7 +376,7 @@ knitr::include_graphics("../img/2008-02-23_nytimes_movies_gross_earnings.png")
 
 # .font90[The engineers presented tables like this one]
 
-```{r o-rings_chart, out.width = "600px"}
+```{r o-rings_chart, out.width = "600px", echo = FALSE}
 knitr::include_graphics("../img/morton_thiokol_chart_o-rings.png")
 ```
 
@@ -391,7 +388,7 @@ knitr::include_graphics("../img/morton_thiokol_chart_o-rings.png")
 
 Mathematician Edward Tufte issued a critique and argued that the data should have been presented this way:
 
-```{r tufte-challenger, out.width = "750px"}
+```{r tufte-challenger, out.width = "750px", echo = FALSE}
 knitr::include_graphics("../img/tufte_challenger_scatterplot_recreation.png")
 ```
 
@@ -403,7 +400,7 @@ knitr::include_graphics("../img/tufte_challenger_scatterplot_recreation.png")
 
 This information was presented in Congressional Hearings about the incident in this format:
 
-```{r challenger_congress, out.width = "450px"}
+```{r challenger_congress, out.width = "450px", echo = FALSE}
 knitr::include_graphics("../img/challenger_congressional_evidence.png")
 ```
 
@@ -447,7 +444,7 @@ count: false
 
 # .font90[Example 1: gun deaths in Florida over time]
 
-```{r reuters_florida, out.width = "400px"}
+```{r reuters_florida, out.width = "400px", echo = FALSE}
 knitr::include_graphics("../img/reuters_florida_stand_your_ground.gif")
 ```
 
@@ -458,7 +455,7 @@ knitr::include_graphics("../img/reuters_florida_stand_your_ground.gif")
 *   The political/editorial magazine National Review [tweeted the following visualization](https://twitter.com/NRO/status/676516015078039556) on December 14, 2015.
     The visualization [originates from a post](http://www.powerlineblog.com/archives/2015/10/the-only-global-warming-chart-you-need-from-now-on.php) on a political blog called Power Line.
 
-```{r nro_powerline_temperatures, out.width = "700px"}
+```{r nro_powerline_temperatures, out.width = "700px", echo = FALSE}
 knitr::include_graphics("../img/nro_powerline_temperatures.jpg")
 ```
 
@@ -470,7 +467,7 @@ count: false
 
 *   Here's a conventional version of the same data:
 
-```{r nasa_goddard_temperatures, out.height = "375px"}
+```{r nasa_goddard_temperatures, out.height = "375px", echo = FALSE}
 knitr::include_graphics("../img/nasa_goddard_temperatures.gif")
 ```
 

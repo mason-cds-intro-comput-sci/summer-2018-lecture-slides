@@ -7,13 +7,13 @@ date: May 25, 2018
 class: center, middle, title-slide
 
 .upper-right[
-```{r logo, eval = TRUE, echo = FALSE, out.width = "605px"}
+```{r logo, echo = FALSE, out.width = "605px"}
 knitr::include_graphics("../img/cds-101-a01-logo.png")
 ```
 ]
 
 .lower-right[
-```{r cc-by-sa, eval = TRUE, echo = FALSE, out.width = "88px"}
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
 knitr::include_graphics("../img/cc-by-sa.png")
 ```
 
@@ -33,13 +33,10 @@ class: middle, center, inverse
 
 ```{r setup, include = FALSE}
 # DO NOT ALTER THIS CHUNK
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE, fig.width = 5, warning = FALSE,
-                      fig.asp = 0.618, out.width = "70%", dpi = 120,
-                      fig.align = "center", cache = FALSE, message = FALSE)
-options(htmltools.dir.version = FALSE)
+source("../src/xaringan_setup.R")
 # Load required packages
-suppressPackageStartupMessages(library(tidyverse, quietly = TRUE))
-suppressPackageStartupMessages(library(gridExtra, quietly = TRUE))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gridExtra))
 ```
 
 ---
@@ -353,7 +350,7 @@ starwars
 # Luke Skywalker
 
 .valign-slide[
-```{r luke-skywalker-data, height = "100%"}
+```{r luke-skywalker-data, height = "100%", echo = FALSE}
 knitr::include_graphics("../img/luke-skywalker.png")
 ```
 ]
@@ -381,7 +378,7 @@ Run the following **in the Console** to view the help
 ]
 
 .pull-right[
-```{r starwars-helpdata, out.width = "100%"}
+```{r starwars-helpdata, out.width = "100%", echo = FALSE}
 knitr::include_graphics("../img/starwars-help.png")
 ```
 ]
@@ -453,7 +450,7 @@ ggplot(data = starwars) +
 --
 
 .pull-right[
-```{r jabba-the-hut, out.width = "70%"}
+```{r jabba-the-hut, out.width = "70%", echo = FALSE}
 knitr::include_graphics("../img/jabba.png")
 ```
 ]

@@ -33,20 +33,7 @@ class: middle, center, inverse
 
 ```{r setup, include = FALSE}
 # DO NOT ALTER THIS CHUNK
-knitr::opts_chunk$set(
-  echo = TRUE,
-  eval = TRUE,
-  fig.width = 6,
-  warning = FALSE,
-  message = FALSE,
-  dev = "svg",
-  fig.asp = 0.618,
-  out.width = "70%",
-  dpi = 120,
-  fig.align = "center",
-  cache = FALSE
-)
-options(htmltools.dir.version = FALSE)
+source("../src/xaringan_setup.R")
 # Load required packages
 suppressPackageStartupMessages(library(tidyverse))
 ```

@@ -1,5 +1,6 @@
 ---
 xaringan::moon_reader:
+  dev: svg
   lib_dir: "../libs"
   css:
     - "../libs/css/default.css"
