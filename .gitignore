@@ -264,3 +264,4 @@ vignettes/*.pdf
 !.style.yapf
 !.travis.yml
 !.env.example
+!data/Most-Recent-Cohorts-All-Data-Elements.csv.gz
