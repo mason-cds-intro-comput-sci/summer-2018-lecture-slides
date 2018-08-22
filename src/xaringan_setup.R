@@ -1,6 +1,7 @@
 knitr::opts_chunk$set(
   echo = TRUE,
   eval = TRUE,
+  dev = "svg",
   fig.width = 6,
   warning = FALSE,
   message = FALSE,
