@@ -1,4 +1,4 @@
-CDS 101 lecture slides (Summer 2018)
+CDS 101 lecture slides (Summer 2018) <img src="https://travis-ci.com/mason-cds-intro-comput-sci/summer-2018-lecture-slides.svg?branch=master" />
 ====================================
 
 R Markdown source files for the CDS 101 slides used during the summer 2018 semester at George Mason University.
