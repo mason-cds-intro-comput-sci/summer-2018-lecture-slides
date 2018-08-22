@@ -147,8 +147,7 @@ sim1_mod <- lm(y ~ x, data = sim1)
 .pull-right.code80[
 ```r
 sim1_mod %>%
-  tidy() %>%
-  as_data_frame()
+  tidy()
 ```
 ]
 
@@ -158,7 +157,6 @@ sim1_mod %>%
 ```{r sim1-lm-broom-tidy, echo = FALSE}
 sim1_mod %>%
   tidy() %>%
-  as_data_frame() %>%
   knitr::kable(format = "html")
 ```
 ]
@@ -172,8 +170,7 @@ Get additional model details with `glance()`
 .code80[
 ```r
 sim1_mod %>%
-  glance() %>%
-* as_data_frame()  # broom doesn't output tibbles by default
+  glance()
 ```
 ]
 
@@ -183,7 +180,6 @@ sim1_mod %>%
 ```{r sim1-lm-broom-glance, echo = FALSE}
 sim1_mod %>%
   glance() %>%
-  as_data_frame() %>%
   knitr::kable(format = "html")
 ```
 ]
@@ -600,7 +596,7 @@ ggplot(mariokart2) +
   geom_qq_line(mapping = aes(sample = totalPr))
 ```
 
-```{r mariokart-totalPr-qq-plot, out.width = "65%", echo = FALSE, eval = TRUE}
+```{r mariokart-totalPr-qq-plot, out.width = "60%", echo = FALSE, eval = TRUE}
 ggplot(mariokart2) +
   geom_qq(mapping = aes(sample = totalPr)) +
   geom_qq_line(mapping = aes(sample = totalPr))
@@ -740,13 +736,42 @@ mariokart_cond_model_df <- train %>%
 
 # Summary of our fit
 
-Print out some basic details about the linear fit:
+Use the `broom` package to review basic details about the linear model.
+
+--
+Use `tidy()` to see the model parameters:
+
+.code80[
+```r
+mariokart_cond_model_lm %>%
+  tidy()
+```
+]
+
+.font80[
+```{r mariokart-model-cond-broom-tidy, echo = FALSE}
+mariokart_cond_model_lm %>%
+  tidy() %>%
+  knitr::kable(format = "html")
+```
+]
 
 --
 
-.code70[
-```{r mariokart-model-cond-summary}
-summary(mariokart_cond_model_lm)
+Use `glance()` to get additional summary information about the model:
+
+.code80[
+```r
+mariokart_cond_model_lm %>%
+  glance()
+```
+]
+
+.font70[
+```{r mariokart-model-cond-broom-glance, echo = FALSE}
+mariokart_cond_model_lm %>%
+  glance() %>%
+  knitr::kable(format = "html")
 ```
 ]
 
@@ -813,7 +838,7 @@ ggplot(mariokart_cond_model_df) +
   geom_qq_line(mapping = aes(sample = resid))
 ```
 
-```{r mariokart-cond-resid-qq-plot, echo = FALSE}
+```{r mariokart-cond-resid-qq-plot, echo = FALSE, out.width = "65%"}
 ggplot(mariokart_cond_model_df) +
   geom_qq(mapping = aes(sample = resid)) +
   geom_qq_line(mapping = aes(sample = resid))

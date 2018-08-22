@@ -565,7 +565,7 @@ Finally, let's save our work so that we don't need to always reconnect to the we
 
 ```{r imdb-top-tv-write-rds, eval = FALSE}
 imdb_top_tv %>%
-  write_rds("2018-06-08T2035EST_imdb_tv.rds", compress = "gz")
+  write_rds("2018-06-08T2035EDT_imdb_tv.rds", compress = "gz")
 ```
 
 --
