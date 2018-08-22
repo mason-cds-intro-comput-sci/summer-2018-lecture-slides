@@ -1,0 +1,301 @@
+---
+title: CDS-101-A01 <br> Class 2 <br> The data scientist's toolbox
+author: Dr. Glasbrenner
+date: May 22, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, eval = TRUE, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, eval = TRUE, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-nc-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+]
+
+# Class 2: The data scientist's toolbox
+.title-hline[
+## May 22, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  fig.width = 6,
+  warning = FALSE,
+  message = FALSE,
+  dev = "svg",
+  fig.asp = 0.618,
+  out.width = "70%",
+  dpi = 120,
+  fig.align = "center",
+  cache = FALSE
+)
+options(htmltools.dir.version = FALSE)
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+---
+
+# Annoucements
+
+.valign-slide[
+* If you haven't introduced yourself on the Slack channel yet, please do so!
+
+* Reading:
+
+  * *R for Data Science:* Chapters 1, 26 (short) , and 27, complete by Wednesday, May 23rd at 9:00am
+
+* RMarkdown mini-assignment (to be posted) due Wednesday, May 24th by 11:59pm
+]
+
+---
+
+# Class agenda
+
+.valign-slide[
+*   Motivation for "Reproducible research"
+
+*   How does Github work?
+]
+
+---
+
+class: middle, center, inverse
+
+# Motivation for Reproducible Research
+
+---
+
+# The scientific method
+
+1. Review evidence
+
+--
+
+2. Hypothesis
+
+--
+
+3. Formulate predictive test
+
+--
+
+4. Design/run experiment
+
+--
+
+5. Validate or revise hypothesis
+
+--
+
+* Key point: create a hypothesis and test it out
+
+--
+
+* Validation by the natural world ("Nature")
+
+--
+
+* Anyone can double check!
+
+---
+
+# Reproducibility in practice
+
+* Sometimes easier said than done, various reasons why
+
+--
+
+  * Lack of funding sources
+
+--
+
+  * Lack of data sharing
+
+--
+
+  * Lack of interest
+
+--
+
+  * "Top-tier" journals won't publish
+
+--
+
+  * Vague methods
+
+--
+
+*   It's very important that we have reproduced research, because...
+
+---
+
+# The Reproducibility Project
+
+.quote-container.valign-slide[
+> Brian Nosek of University of Virginia and colleagues sought out to replicate 100 different studies that all were published in 2008. The project pulled these studies from three different [psychology] journals... to see if they could get the same results as the initial findings. [...] Only 36.1% of the studies [were] replicated.
+.cite[[Reproducibility Project](https://en.wikipedia.org/wiki/Reproducibility_Project) Wikipedia entry]
+]
+
+---
+
+# .font50[Science retracts gay marriage paper without agreement of lead author LaCour]
+
+* In May 2015 Science retracted a study of how canvassers can sway people's opinions about gay marriage published just 5 months ago.
+
+.footnote[
+Source: http://news.sciencemag.org/policy/2015/05/science-retracts-gay-marriage-paper-without-lead-author-s-consent
+]
+
+--
+
+* Science Editor-in-Chief Marcia McNutt: Original survey data not made available for independent reproduction of results.
+
+--
+
+  * Survey incentives misrepresented. 
+
+--
+
+  * Sponsorship statement false.
+
+--
+
+* Two Berkeley grad students who attempted to replicate the study quickly discovered that the data must have been faked.
+
+--
+
+* Methods we'll discuss today can't prevent this, but they can make it easier to discover issues.
+
+---
+
+# .font50[Seizure study retracted after authors realize data got "terribly mixed"]
+
+.quote-container.valign-slide[
+> The article has been retracted at the request of the authors. After carefully re-examining the data presented in the article, they identified that data of two different hospitals got terribly mixed. The published results cannot be reproduced in accordance with scientific and clinical correctness.
+.cite[Authors of **Low Dose Lidocaine for Refractory Seizures in Preterm Neonates**]
+]
+
+.footnote[
+Source: http://retractionwatch.com/2013/02/01/seizure-study-retracted-after-authors-realize-data-got-terribly-mixed/
+]
+
+---
+
+# .font50[Bad spreadsheet merge kills depression paper, quick fix resurrects it]
+
+The authors informed the journal that the merge of lab results and other survey data used in the paper resulted in an error regarding the identification codes. Results of the analyses were based on the data set in which this error occurred. Further analyses established the results reported in this manuscript and interpretation of the data are not correct.
+
+.footnote[
+Source: http://retractionwatch.com/2014/07/01/bad-spreadsheet-merge-kills-depression-paper-quick-fix-resurrects-it/
+]
+
+--
+
+.answer[
+**Original conclusion:** "Lower levels of CSF IL-6 were associated with current depression and with future depression [...]".
+]
+
+--
+
+.answer[
+**Revised conclusion:** "Higher levels of CSF IL-6 and IL-8 were associated with current depression [...]".
+]
+
+---
+
+class: middle, center, inverse
+
+# Reproducibility: why should we care?
+
+---
+
+# Two-pronged approach
+
+.valign-slide[
+* Convince researchers to adopt a reproducible research workflow
+
+* Train new researchers who don't have any other workflow
+]
+
+---
+
+# Reproducible data analysis
+
+.valign-slide[
+*   Scriptability → R
+
+*   Literate programming → R Markdown
+
+*   Version control → Git / GitHub
+]
+
+---
+
+class: middle, center, inverse
+
+# Scripting and literate programming 
+
+---
+
+# .font90[Donald Knuth *Literate Programming* (1983)]
+
+.quote-container[
+> Let us change our traditional attitude to the construction of programs: Instead of imagining that our main task is to instruct a computer what to do, let us concentrate rather on explaining to human beings what we want a computer to do.
+.cite[Donald Knuth in *Literate Programming* (1983)]
+]
+
+--
+
+* These ideas have been around for years!
+
+--
+
+* and tools for putting them to practice have also been around
+
+--
+
+* but they have never been as accessible as the current tools
+
+---
+
+# Reproducibility checklist
+
+.valign-slide[
+* Are the tables and figures reproducible from the code and data?
+
+* Does the code actually do what you think it does?
+
+* In addition to what was done, is it clear **why** it was done? (e.g., how were parameter settings chosen?)
+
+* Can the code be used for other data?
+
+* Can you extend the code to do other things?
+]
+
+---
+
+# Credits
+
+.valign-slide[
+These slides were adapted from the following sources:
+
+* The [Introduction to R/Rstudio and git/GitHub slides](https://github.com/mine-cetinkaya-rundel/sta112_f15/blob/23c4737403bc59b5b78acc4c9cb4d9cf2eca209a/slides/deck2/deck2.Rmd) developed by Mine Çetinkaya-Rundel and made available under the [CC BY-NC-SA 4.0 license](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+]
