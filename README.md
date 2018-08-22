@@ -6,6 +6,7 @@ After installing the [necessary requirements](#requirements), see [How-To Guide]
 
 *   [Requirements](#requirements)
 *   [Dependencies](#dependencies)
+*   [How-To Guide](#how-to-guide)
 *   [License](#license)
 
 Requirements
