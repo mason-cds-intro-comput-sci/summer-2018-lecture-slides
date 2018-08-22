@@ -94,5 +94,5 @@ Unless otherwise noted, the materials in this repository are licensed under a [C
 [rstudio-url]:           https://www.rstudio.com/products/rstudio/download/preview/
 [cc-by-sa-4-img]:        https://i.creativecommons.org/l/by-sa/4.0/88x31.png
 [git-download-page]:     https://git-scm.com/download
-[rtools-ubc-mirror]:     https://cran.cnr.berkeley.edu/bin/windows/Rtools/
+[rtools-ucb-mirror]:     https://cran.cnr.berkeley.edu/bin/windows/Rtools/
 [rstudio-git-explainer]: http://happygitwithr.com/rstudio-git-github.html#clone-the-new-github-repository-to-your-computer-via-rstudio
