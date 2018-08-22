@@ -1,0 +1,1063 @@
+---
+title: CDS-101-001 <br> Class 20 <br> Modeling II
+author: Dr. Glasbrenner
+date: June 18, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 20: Modeling II
+.title-hline[
+## June 18, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(modelr))
+suppressPackageStartupMessages(library(broom))
+# Load cross-validation helper script
+source(
+  "http://summer18.cds101.com/files/R/repeated_kfold_cross_validation.R"
+)
+# Load mariokart data set
+mariokart <- read_rds("../data/mariokart.rds")
+# Set seed
+set.seed(931114)
+```
+
+---
+
+# Annoucements
+
+* Complete Reading 15 (last one) in advance of class on Tuesday, June 19th
+
+* Homework 4 and extra credit Homework 5 due by **11:59pm on Wednesday, June 20th**
+
+  * Homework 4 must be submitted before you can turn in Homework 5
+
+* **Final project due dates**
+
+  * **Annotations first draft**: 12:00pm noon on Thursday, June 21st
+
+  * **Peer reviews**: 6:00pm on Thursday, June 21st
+
+  * **Annotations and final draft**: 9:00am on Friday, June 22nd
+  
+  * **Comparative discussion of simulations**: 10:30am on Friday, June 22nd
+
+* **Final interviews scheduled during final exam period**: Friday, June 22nd between 10:30am and 1:15pm
+
+---
+
+class: middle, center, inverse
+
+# Linear models in the tidyverse
+
+---
+
+# Last time...
+
+--
+
+* We used the `sim1` dataset loaded via `library(modelr)` and used `geom_smooth()` with `method = "lm"` to show what the linear model will look like
+
+--
+
+```{r sim1-smooth-plot, out.width = "60%"}
+ggplot(sim1) +
+  geom_point(mapping = aes(x = x, y = y)) +
+  geom_smooth(mapping = aes(x = x, y = y), method = "lm", se = FALSE)
+```
+
+---
+
+# Using `lm()` to build linear models
+
+.code80[
+```{r sim1-lm-model}
+sim1_mod <- lm(y ~ x, data = sim1)
+```
+]
+
+--
+
+.font80[
+* `summary()` gives a general report about the model
+]
+
+.code80[
+```r
+summary(sim1_mod)
+```
+]
+
+.code70[
+```{r sim1-lm-summary-output, echo = FALSE}
+summary(sim1_mod)
+```
+]
+
+---
+
+# A tidier `lm()` summary
+
+--
+
+.code80[
+```r
+library(broom)  # Installed alongside tidyverse
+```
+]
+
+--
+
+.pull-left.code80[
+.font80.center[
+Get model parameters with `tidy()`
+]
+
+```r
+sim1_mod <- lm(y ~ x, data = sim1)
+```
+]
+
+.pull-right.code80[
+```r
+sim1_mod %>%
+  tidy() %>%
+  as_data_frame()
+```
+]
+
+--
+
+.font80[
+```{r sim1-lm-broom-tidy, echo = FALSE}
+sim1_mod %>%
+  tidy() %>%
+  as_data_frame() %>%
+  knitr::kable(format = "html")
+```
+]
+
+--
+
+.font80.center[
+Get additional model details with `glance()`
+]
+
+.code80[
+```r
+sim1_mod %>%
+  glance() %>%
+* as_data_frame()  # broom doesn't output tibbles by default
+```
+]
+
+--
+
+.font70[
+```{r sim1-lm-broom-glance, echo = FALSE}
+sim1_mod %>%
+  glance() %>%
+  as_data_frame() %>%
+  knitr::kable(format = "html")
+```
+]
+
+---
+
+# Method for plotting our model
+
+* The following is a basic recipe for visualizing our models
+
+--
+
+* Create a series of `x` values with `data_grid()`:
+
+```{r sim1-grid}
+grid <- data_grid(sim1, x)
+```
+
+--
+
+```{r sim1-grid-html, eval = TRUE, echo = FALSE}
+head(grid) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# Extract predictions and residuals
+
+--
+
+* Use `add_predictions()` to import predictions into your tibble
+
+--
+
+```{r sim1-lm-predictions}
+grid2 <- add_predictions(grid, sim1_mod)
+```
+
+--
+
+* Use `add_residuals()` to extract the residuals from your fit.
+
+--
+
+```{r sim1-lm-residuals}
+sim1_resid <- add_residuals(sim1, sim1_mod)
+```
+
+---
+
+# Visualize the full model
+
+* Create a plot:
+
+--
+
+```{r sim1-line-plot}
+ggplot(sim1) +
+  geom_point(aes(x = x, y = y)) +
+  geom_line(aes(x = x, y = pred), data = grid2, color = "red", size = 1)
+```
+
+---
+
+# Inspect the residuals
+
+* Use `geom_histogram()` to inspect the absolute residuals.
+
+--
+
+```{r sim1-lm-residuals-histogram}
+ggplot(sim1_resid) +
+  geom_histogram(aes(x = resid), binwidth = 1)
+```
+
+---
+
+# Are the residuals normal?
+
+* The residuals should be nearly normal.
+
+--
+
+* A good test for normal residuals is a Q-Q plot:
+
+--
+
+.code80[
+```r
+ggplot(sim1_resid) +
+  geom_qq(aes(sample = resid)) +
+  geom_qq_line(aes(sample = resid))
+```
+]
+
+---
+
+count: false
+
+# Are the residuals normal?
+
+* The residuals should be nearly normal.
+
+* A good test for normal residuals is a Q-Q plot:
+
+```{r sim1-lm-residuals-qqplot, echo = FALSE}
+ggplot(sim1_resid) +
+  geom_qq(aes(sample = resid)) +
+  geom_qq_line(aes(sample = resid))
+```
+
+---
+
+# Residual spread
+
+* Inspect the residual spread as a function of `x` to check whether the variability is constant or not:
+
+--
+
+```{r}
+ggplot(sim1_resid) +
+  geom_ref_line(h = 0) +
+  geom_point(aes(x = x, y = resid))
+```
+
+---
+
+class: middle, center, inverse
+
+# Case study: Mario Kart eBay prices dataset
+
+---
+
+# Machine Learning and prediction
+
+
+--
+
+* Machine Learning models are built with the purpose of making predictions
+
+--
+
+* The model is "trained" on a dataset and "learns" how to reproduce the general structure and features in that dataset
+
+--
+
+* In the best case scenario, you get a model with strong predictive powers that can take a series of inputs and generate a highly accurate output
+
+--
+
+* Generally only interested in accuracy, not understanding, making **prediction** distinct from **inference**
+
+--
+
+* This accuracy comes at a price, as the most accurate prediction models are frequently the most complicated
+
+--
+
+* This is what people mean when they say that Machine Learning algorithms are like a "black box"
+
+---
+
+layout: true
+
+# Can we predict accurately eBay prices?
+
+.footnote[
+Image: *Mario Kart Wii* cover art, ©Nintendo, downloaded from Wikipedia, <https://en.wikipedia.org/wiki/File:Mario_Kart_Wii.png>
+]
+
+---
+
+.pull-left[
+* Data scraped from eBay listings for the video game *Mario Kart Wii*
+]
+
+.pull-right[
+```{r mariokart-wii-cover, echo = FALSE, out.width = "90%"}
+knitr::include_graphics("../img/mario_kart_wii_cover_art.png")
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+* Data scraped from eBay listings for the video game *Mario Kart Wii*
+
+* Can we predict each game's final selling price using other information on a eBay listing page?
+]
+
+.pull-right[
+```{r mariokart-wii-cover, echo = FALSE, out.width = "90%"}
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+* Data scraped from eBay listings for the video game *Mario Kart Wii*
+
+* Can we predict each game's final selling price using other information on a eBay listing page?
+
+### Goal
+
+**Build a model that predicts the dataset variable `totalPr` using the other columns**
+]
+
+.pull-right[
+```{r mariokart-wii-cover, echo = FALSE, out.width = "90%"}
+```
+]
+
+---
+
+layout: false
+class: middle, center, inverse
+
+# Data exploration
+
+---
+
+# What's in this dataset?
+
+--
+
+* What are the first several entries of the *Mario Kart* dataset?
+
+--
+
+```r
+mariokart %>%
+  glimpse()
+```
+
+--
+
+.code80[
+```{r mariokart-table, eval = TRUE, echo = FALSE}
+mariokart %>%
+  glimpse()
+```
+]
+
+---
+
+# Exploring the response variable
+
+* What is the shape and center of the response variable `totalPr`?
+
+--
+
+```{r mariokart-totalPr-with-outliers}
+ggplot(mariokart) +
+  geom_histogram(
+    mapping = aes(x = totalPr, fill = cond),
+    position = "identity", alpha = 0.5, binwidth = 5, center = 0
+  )
+```
+
+---
+
+# Exploring the response variable
+
+* A box plot is nice to use for exploration as well
+
+```{r mariokart-totalPr-with-outliers-boxplot}
+ggplot(mariokart) +
+  geom_boxplot(mapping = aes(x = cond, y = totalPr))
+```
+
+---
+
+# Find the outliers
+
+--
+
+* What are the outliers?
+
+--
+
+* Filter the dataset to isolate them
+
+--
+
+```r
+mariokart %>%
+  filter(totalPr > 100) %>%
+  glimpse()
+```
+
+.code70[
+```{r mariokart-totalPr-explore-outliers, echo = FALSE}
+mariokart %>%
+  filter(totalPr > 100) %>%
+  glimpse()
+```
+]
+
+---
+
+# Inspect outlier characteristics
+
+--
+
+* Look at the listing titles
+
+--
+
+```r
+mariokart %>%
+  filter(totalPr > 100) %>%
+  select(title) %>%
+  head()
+```
+
+```{r mariokart-totalPr-outliers-titles, echo = FALSE}
+mariokart %>%
+  filter(totalPr > 100) %>%
+  select(title) %>%
+  head() %>%
+  knitr::kable(format = "html")
+```
+
+--
+
+* These are bundled items, not like the rest of the items in the dataset.
+
+--
+
+* Let's remove the outliers
+
+--
+
+* For simplicity, we will also restrict ourselves to a subset of variables: `cond`, `stockPhoto`, `duration`, and `wheels`
+
+---
+
+# Removing outliers
+
+```{r mariokart-filter-outliers-select-cols}
+mariokart2 <- mariokart %>%
+  filter(totalPr <= 100) %>%
+  select(totalPr, cond, stockPhoto, duration, wheels)
+```
+
+--
+
+* Let's check the box plot again, this time with no outliers
+
+--
+
+```{r mariokart-totalPr-no-outliers-boxplot, echo = FALSE}
+ggplot(mariokart2) +
+  geom_boxplot(mapping = aes(x = cond, y = totalPr))
+```
+
+---
+
+# Looking for trends
+
+* Continue exploring the dataset to find trends: does game condition and using a stock photo affect the total price?
+
+--
+
+.code70[
+```{r mariokart-cond-stockPhoto-histogram, out.width = "65%"}
+ggplot(mariokart2) +
+  geom_histogram(
+    mapping = aes(totalPr, fill = cond), position = "identity",
+    alpha = 0.5, center = 0, binwidth = 2
+  ) +
+  facet_wrap(~stockPhoto)
+```
+]
+
+---
+
+# Looking for trends
+
+* A box plot would also be an appropriate way to show this data:
+
+```{r mariokart-cond-stockPhoto-boxplot, out.width = "65%"}
+ggplot(mariokart2) +
+  geom_boxplot(mapping = aes(x = cond, y = totalPr)) +
+  facet_wrap(~stockPhoto)
+```
+
+---
+
+# Data distribution of `totalPr`
+
+--
+
+* Is `totalPr` nearly normal?
+
+--
+
+* How does the distribution shape change within categories?
+
+--
+
+* Use Q-Q plot to check `totalPr` by itself:
+
+--
+
+```r
+ggplot(mariokart2) +
+  geom_qq(mapping = aes(sample = totalPr)) +
+  geom_qq_line(mapping = aes(sample = totalPr))
+```
+
+```{r mariokart-totalPr-qq-plot, out.width = "65%", echo = FALSE, eval = TRUE}
+ggplot(mariokart2) +
+  geom_qq(mapping = aes(sample = totalPr)) +
+  geom_qq_line(mapping = aes(sample = totalPr))
+```
+
+---
+
+# `totalPr` distribution within groups
+
+* Q-Q plot with `totalPr` split by game condition:
+
+--
+
+```{r mariokart-totalPr-cond-qq-plot}
+ggplot(mariokart2) +
+  geom_qq(mapping = aes(sample = totalPr, color = cond)) +
+  geom_qq_line(mapping = aes(sample = totalPr, color = cond))
+```
+
+---
+
+# `totalPr` distribution within groups
+
+* Q-Q plot with `totalPr` split by game condition and faceted by `stockPhoto`:
+
+```{r mariokart-totalPr-cond-stockPhoto-qq-plot}
+ggplot(mariokart2) +
+  geom_qq(mapping = aes(sample = totalPr, color = cond)) +
+  geom_qq_line(mapping = aes(sample = totalPr, color = cond)) +
+  facet_wrap( ~ stockPhoto)
+```
+
+---
+
+# Categorical variables in scatterplots
+
+* What happens if we plot `totalPr` as a function of `cond`, a categorical variable?
+
+--
+
+```{r mariokart-totalPr-cond-scatterplot}
+ggplot(mariokart2) +
+  geom_point(mapping = aes(cond, totalPr), size = 3, alpha = 0.7)
+```
+
+---
+
+# Categorical variables in scatterplots
+
+* It's easier to see the points if we jitter them
+
+```{r mariokart-totalPr-cond-scatterplot-jitter}
+ggplot(mariokart2) +
+  geom_jitter(
+    mapping = aes(cond, totalPr), size = 3, alpha = 0.7, width = 0.25,
+    height = 0.25)
+```
+
+---
+
+class: middle, center, inverse
+
+# Training and testing datasets
+
+---
+
+# Split dataset 80/20
+
+--
+
+* Frequently, it's good practice to split a dataset prior to testing a model.
+
+--
+
+* The following code splits the data into two partitions
+
+--
+
+```{r mariokart-train-test-split}
+mariokart_with_ids <- mariokart2 %>%
+ bind_cols(id = 1:nrow(mariokart2))
+
+train <- mariokart_with_ids %>%
+  sample_frac(size = 0.80, replace = FALSE)
+
+test  <- mariokart_with_ids %>%
+  anti_join(train, by = 'id')
+```
+
+--
+
+* 80% is randomly selected and placed in the training dataset
+
+--
+  
+* Remaining 20% is used for the testing dataset
+
+--
+
+* All subsequent model building will be done using the `train` dataset
+
+---
+
+class: middle, center, inverse
+
+# Univariate linear regression models
+
+---
+
+# Predict using game condition
+
+* Let's start with a refresher on creating a univariate linear model using `lm()`
+
+--
+
+* Build a model that uses the `cond` categorical variable to predict the total price `totalPr`
+
+--
+
+```{r mariokart-model-cond}
+mariokart_cond_model_lm <- lm(totalPr ~ cond, data = train)
+```
+
+--
+
+* Predict training dataset and compute the residuals
+
+--
+
+```{r mariokart-model-cond-predict-resid}
+mariokart_cond_model_df <- train %>%
+  add_predictions(mariokart_cond_model_lm) %>%
+  add_residuals(mariokart_cond_model_lm)
+```
+
+---
+
+# Summary of our fit
+
+Print out some basic details about the linear fit:
+
+--
+
+.code70[
+```{r mariokart-model-cond-summary}
+summary(mariokart_cond_model_lm)
+```
+]
+
+---
+
+# Visualize the model
+
+* Since `cond` is categorical, what will it look like when we overlay our models' predictions on the data?
+
+--
+
+```{r mariokart-model-cond-scatter}
+ggplot(mariokart_cond_model_df) +
+  geom_point(mapping = aes(x = cond, y = totalPr)) +
+  geom_point(mapping = aes(x = cond, y = pred), color = "red", size = 3)
+```
+
+---
+
+count: false
+
+# Visualize the model
+
+* Since `cond` is categorical, what will it look like when we overlay our models' predictions on the data?
+
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(mapping = aes(x = cond, y = totalPr)) +
+  geom_point(mapping = aes(x = cond, y = pred), color = "red", size = 3)
+```
+
+```{r mariokart-model-cond-scatter-line, echo = FALSE}
+lm1_slope <- purrr::pluck(mariokart_cond_model_lm, coefficients, "condused")
+lm1_int <- purrr::pluck(mariokart_cond_model_lm, coefficients, "(Intercept)")
+ggplot(mariokart_cond_model_df) +
+  geom_point(mapping = aes(x = cond, y = totalPr)) +
+  geom_point(mapping = aes(x = cond, y = pred), color = "red", size = 3) +
+  geom_abline(intercept = lm1_int - lm1_slope, slope = lm1_slope)
+```
+
+
+---
+
+# Inspect residuals
+
+* Let's inspect the residuals:
+
+--
+
+```{r mariokart-cond-resid}
+ggplot(mariokart_cond_model_df) +
+  geom_histogram(mapping = aes(x = resid), binwidth = 1, center = 0)
+```
+
+---
+
+# Inspect residuals
+
+* Let's inspect the residuals:
+
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_qq(mapping = aes(sample = resid)) +
+  geom_qq_line(mapping = aes(sample = resid))
+```
+
+```{r mariokart-cond-resid-qq-plot, echo = FALSE}
+ggplot(mariokart_cond_model_df) +
+  geom_qq(mapping = aes(sample = resid)) +
+  geom_qq_line(mapping = aes(sample = resid))
+```
+
+--
+
+* Deviations from normal distribution with long tail on the right
+
+---
+
+layout: true
+
+# Observed values vs. predicted values
+
+---
+
+.pull-left[
+* Accurate prediction is our goal, so we should visualize how well the predictions match with the actual values
+]
+
+---
+
+count: false
+
+.pull-left[
+* Accurate prediction is our goal, so we should visualize how well the predictions match with the actual values
+
+.code80[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(totalPr, pred)) +
+  geom_abline(
+    slope = 1, intercept = 0,
+    color = "red", size = 1)
+```
+]
+]
+
+.pull-right[
+```{r mariokart-cond-pred-vs-actual, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, totalPr)) +
+  geom_abline(slope = 1, intercept = 0, color = "red", size = 1) +
+  labs(x = "predicted", y = "observed", title = "Observed versus \npredicted values") +
+  coord_fixed()
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+* Accurate prediction is our goal, so we should visualize how well the predictions match with the actual values
+
+.code80[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(totalPr, pred)) +
+  geom_abline(
+    slope = 1, intercept = 0,
+    color = "red", size = 1)
+```
+]
+
+* This is called an "observed versus predicted" plot<sup>†</sup>
+]
+
+.pull-right[
+```{r mariokart-cond-pred-vs-actual, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+.footnote[
+<sup>†</sup> There isn't a precise name for this type of plot, so you may see this called an "actual versus predicted" plot or an "actual versus fitted" plot, or something else.
+]
+
+---
+
+count: false
+
+.pull-left[
+* Accurate prediction is our goal, so we should visualize how well the predictions match with the actual values
+
+.code80[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(totalPr, pred)) +
+  geom_abline(
+    slope = 1, intercept = 0,
+    color = "red", size = 1)
+```
+]
+
+* This is called an "observed versus predicted" plot<sup>†</sup>
+
+* There's a residuals version of this, the "residual versus predicted" plot
+]
+
+.pull-right[
+```{r mariokart-cond-pred-vs-actual, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+.footnote[
+<sup>†</sup> There isn't a precise name for this type of plot, so you may see this called an "actual versus predicted" plot or an "actual versus fitted" plot, or something else.
+]
+
+---
+
+layout: true
+
+# Residual vs. predicted values
+
+---
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+]
+
+.pull-right[
+```{r mariokart-cond-resid-vs-pred, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0) +
+  labs(x = "predicted", y = "residual", title = "Residual versus \npredicted values") +
+  coord_fixed()
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+
+* The residual spread stays consistent, so that's good
+]
+
+.pull-right[
+```{r mariokart-cond-resid-vs-pred, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+---
+count: false
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+
+* The residual spread stays consistent, so that's good
+
+* However, the long tails and this model's poor prediction ability are good enough reason to try and build a better model
+]
+
+.pull-right[
+```{r mariokart-cond-resid-vs-pred, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+
+* The residual spread stays consistent, so that's good
+
+* However, the long tails and this model's poor prediction ability are good enough reason to try and build a better model
+
+* We can try building other univariate models with the other columns
+]
+
+.pull-right[
+```{r mariokart-cond-resid-vs-pred, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+---
+
+count: false
+
+.pull-left[
+```r
+ggplot(mariokart_cond_model_df) +
+  geom_point(aes(pred, resid)) +
+  geom_ref_line(h = 0)
+```
+
+* The residual spread stays consistent, so that's good
+
+* However, the long tails and this model's poor prediction ability are good enough reason to try and build a better model
+
+* We can try building other univariate models with the other columns
+
+* However, as we'll find out, it's better to train **multivariate** models on this dataset
+]
+
+.pull-right[
+```{r mariokart-cond-resid-vs-pred, out.width = "90%", fig.width = 4, fig.asp = 1.3, dpi = 175, echo = FALSE}
+```
+]
+
+---
+
+layout: false
+
+# Credits
+
+.valign-slide[
+.mono[modelr] package examples using `sim` data set adapted from content in chapters 23.2 and 23.3 of [*R for Data Science*](http://r4ds.had.co.nz/) by Hadley Wickham and Garrett Grolemund and made available under the [CC BY-NC-ND 3.0 license](http://creativecommons.org/licenses/by-nc-nd/3.0/us/).
+
+**Mario Kart data set source:** David M Diez, Christopher D Barr, and Mine Çetinkaya-Rundel. 2012. *openintro*: OpenIntro data sets and supplemental functions. <http://cran.r-project.org/web/packages/openintro>
+
+Mario Kart example loosely adapted from content in chapters 6.1, 6.2, and 6.3 of the [*Introductory Statistics with Randomization and Simulation*](https://www.openintro.org/stat/textbook.php?stat_book=isrs) textbook by David M Diez, Christopher D Barr, and Mine Çetinkaya-Rundel and made available under the [CC BY-NC-SA 3.0 Unported license](http://spring18.cds101.com/doc/isrs_license.txt).
+]

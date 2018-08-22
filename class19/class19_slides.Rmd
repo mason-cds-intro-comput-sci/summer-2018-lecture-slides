@@ -1,0 +1,113 @@
+---
+title: CDS-101-001 <br> Class 19 <br> Modeling I
+author: Dr. Glasbrenner
+date: June 15, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 19: Modeling I
+.title-hline[
+## June 15, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(infer))
+suppressPackageStartupMessages(library(modelr))
+# Set seed
+set.seed(95114)
+```
+
+---
+
+# Annoucements
+
+.valign-slide[
+* Complete Reading 14 in advance of class on Monday, June 18th
+
+* Homework 4 and extra credit Homework 5 due by **11:59pm on Wednesday, June 20th**
+
+  * Homework 4 must be submitted before you can turn in Homework 5
+]
+
+---
+
+class: middle, center, inverse
+
+# Statistical errors and *p*-hacking
+
+---
+
+# Issues with statistics in modern science
+
+*   Over-reliance of *p*-values when determining an experiment's worth
+
+--
+
+*   Data dredging/*p*-hacking
+
+--
+
+*   Lack of transparency regarding statistical analysis
+
+--
+
+*   Poor statistical practices among researchers
+
+--
+
+*   Lack of reports about experiments that fail to reject the null hypothesis
+
+--
+
+*   Ignoring or underemphasizing effect size
+
+---
+
+# .font70[Example: Which political party is better for the economy?]
+
+*   Start with a reasonable hypothesis: the economy is affected by whether or not Democrats or Republicans are in office
+
+--
+
+*   Collect data about different measures of economic performance and when different politicians were in office
+
+--
+
+*   Construct a basic model connecting the two
+
+--
+
+*   [FiveThirtyEight Applet](http://53eig.ht/HackingScience) (<http://53eig.ht/HackingScience>)
+
+---
+
+# Credits
+
+.valign-slide[
+Content in the slides with blue headers adapted from the chapter 7 [OpenIntro Statistics slides](https://github.com/OpenIntroOrg/openintro-statistics-slides) developed by Mine Çetinkaya-Rundel and made available under the [CC BY-SA 3.0 license](http://creativecommons.org/licenses/by-sa/3.0/us/).
+]

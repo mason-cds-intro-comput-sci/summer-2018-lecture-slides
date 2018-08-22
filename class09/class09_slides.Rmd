@@ -1,0 +1,1010 @@
+---
+title: CDS-101-A01 <br> Class 9 <br> Statistical distributions II
+author: Dr. Glasbrenner
+date: June 1, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 9: Statistical distributions II
+.title-hline[
+## June 1, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+# Load datasets
+basket_games <- read_csv("../data/basketball_games_attendance.csv")
+county <- read_rds("../data/county_complete.rds")
+```
+
+---
+
+# Announcements
+
+.valign-slide[
+* Homework 2 posted, due datae is June 6th @ 11:59pm: <http://summer18.cds101.com/assignments/homework-2/>
+
+* Reading 9 from [R for Data Science](http://r4ds.had.co.nz/), questions due on June 6th by 9:00am
+
+  * All of [chapter 7](http://r4ds.had.co.nz/exploratory-data-analysis.html)
+]
+
+---
+
+class: middle, center, inverse
+
+# Statistical distributions
+
+---
+
+# Extremely skewed data
+
+When data are extremely skewed, transforming them might make modeling easier. A common transformation is the **log transformation**.
+
+--
+
+The histograms on the left shows the distribution of number of basketball games attended by students. The histogram on the right shows the distribution of log of number of games attended.
+
+.pull-left[
+```{r basketball-games-distribution, echo = FALSE, out.width = "100%", dpi = 150}
+ggplot(data = basket_games) +
+  geom_histogram(
+    mapping = aes(x = basket_games),
+    binwidth = 10,
+    center = 5,
+    color = "turquoise4",
+    fill = "turquoise2"
+  ) +
+  labs(x = "# of basketball games attended", y = NULL)
+```
+]
+
+.pull-right[
+```{r basketball-games-log-distribution, echo = FALSE, out.width = "100%", dpi = 150}
+ggplot(data = basket_games) +
+  geom_histogram(
+    mapping = aes(x = log(basket_games)),
+    binwidth = 0.5,
+    center = 0.25,
+    color = "turquoise4",
+    fill = "turquoise2"
+  ) +
+  labs(x = "# of basketball games attended", y = NULL)
+```
+
+]
+
+---
+
+# Pros and cons of transformations
+
+* Skewed data are easier to model with when they are transformed because outliers tend to become far less prominent after an appropriate transformation.
+
+  ```
+  # of games             70      50      25    ···
+  log10(# of games)    4.25    3.91    3.22    ···
+  ```
+
+* However, results of an analysis might be difficult to interpret because the log of a measured variable is usually meaningless.
+
+--
+
+.qa[
+What other variables would you expect to be extremely skewed?
+]
+
+--
+
+.answer[
+Salary, housing prices, etc.
+]
+
+---
+
+class: middle, center, inverse
+
+# Quantifying statistical distributions in R
+
+---
+
+# Example data distribution
+
+The following distribution comes from data posted by the US Census Bureau:
+
+```{r mean-travel-time-freq-hist-labeled, echo = FALSE, eval = TRUE, fig.width = 6}
+county %>%
+  ggplot(mapping = aes(x = mean_work_travel)) +
+  geom_histogram(binwidth = 1, fill = "turquoise2", color = "turquoise4") +
+  labs(
+    title = "Average work travel times across 3143 US counties, 2006-2010",
+    x = "Average work travel time (min)", y = "count")
+```
+
+--
+
+.qa[
+How can we quantify the shape of this distribution?
+]
+
+---
+
+# Useful statistical functions
+
+The following R functions will be useful for computing basic statistical measures of any numerical data column (variable)
+
+--
+
+* `mean()`: Computes the average
+
+--
+
+* `median()`: Computes the median
+
+--
+
+* `min()`: Finds the minimum value
+
+--
+
+* `max()`: Finds the maximum value
+
+--
+
+* `sd()`: Computes the standard deviation
+
+--
+
+* `IQR()`: Computes the interquartile range
+
+--
+
+* `percent_rank()`: Computes percentiles
+
+---
+
+# Using the statistical functions
+
+--
+
+* Every function except `percent_rank()` will always return a single quantity
+
+--
+
+* The `summarize()` function is appropriate here:
+
+--
+
+.code80[
+```r
+county %>%
+  summarize(
+    mean = mean(mean_work_travel),
+    median = median(mean_work_travel),
+    min = min(mean_work_travel),
+    max = max(mean_work_travel),
+    sd = sd(mean_work_travel),
+    iqr = IQR(mean_work_travel)
+  )
+```
+]
+
+--
+
+```{r county-summary-stats, eval = TRUE, echo = FALSE}
+county %>%
+  summarize(mean = mean(mean_work_travel), median = median(mean_work_travel),
+            min = min(mean_work_travel), max = max(mean_work_travel),
+            sd = sd(mean_work_travel), iqr = IQR(mean_work_travel)) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# Using the statistical functions
+
+* `percent_rank()` operates on the full column of values, so it needs to be paired with `mutate()`
+
+--
+
+* Once we have the percentiles, we can find the cutoff value for each percentile
+
+--
+
+.code70[
+```r
+county %>%
+  mutate(
+    percentile = percent_rank(mean_work_travel),
+    quartile = case_when(                      # case_when() similar to if_else()
+      percentile < 0.25 ~ "Q1",                # label between 0 and 0.25 as Q1,
+      between(percentile, 0.25, 0.50) ~ "Q2",  # between 0.25 and 0.50 as Q2,
+      between(percentile, 0.50, 0.75) ~ "Q3",  # between 0.50 and 0.75 as Q3,
+      percentile >= 0.75 ~ "Q4"                # and 0.75 to 1.00 as Q4
+    )
+  ) %>%
+  group_by(quartile) %>%
+  summarize(cutoff = max(mean_work_travel))    # cutoff is maximum in quartile
+```
+]
+
+--
+
+```{r county-quantiles, eval = TRUE, echo = FALSE}
+county %>%
+  mutate(
+    percentile = percent_rank(mean_work_travel),
+    quartile = case_when(
+      percentile < 0.25 ~ "Q1",
+      between(percentile, 0.25, 0.50) ~ "Q2",
+      between(percentile, 0.50, 0.75) ~ "Q3",
+      percentile >= 0.75 ~ "Q4"
+    )
+  ) %>%
+  group_by(quartile) %>%
+  summarize(cutoff = max(mean_work_travel)) %>%
+  spread(key = quartile, value = cutoff) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# .font90[Interpreting summary statistics: mean, sd]
+
+One standard deviation above and below the mean
+
+```{r mean-travel-time-freq-hist-labeled-stddev, echo = FALSE, eval = TRUE, fig.width = 6}
+average_mean_work_travel <- county %>%
+  pull(mean_work_travel) %>%
+  mean()
+stdev_mean_work_travel <- county %>%
+  pull(mean_work_travel) %>%
+  sd()
+county %>%
+  ggplot(mapping = aes(x = mean_work_travel)) +
+  geom_histogram(binwidth = 1, fill = "turquoise2", color = "turquoise4") +
+  geom_vline(xintercept = average_mean_work_travel - stdev_mean_work_travel, color = "indianred3", size = 1) +
+  geom_vline(xintercept = average_mean_work_travel + stdev_mean_work_travel, color = "indianred3", size = 1) +
+  geom_vline(xintercept = average_mean_work_travel, color = "black", size = 0.50) +
+  annotate(
+    "rect",
+    xmin = average_mean_work_travel - stdev_mean_work_travel,
+    xmax = average_mean_work_travel + stdev_mean_work_travel,
+    ymin = -Inf,
+    ymax = Inf,
+    fill = "indianred2",
+    alpha = 0.30
+  ) +
+  labs(
+    title = "Average work travel times across 3143 US counties, 2006-2010",
+    x = "Average work travel time (min)", y = "count"
+  )
+```
+
+---
+
+# .font90[Interpreting summary statistics: median, IQR]
+
+The median and inter-quartile range
+
+```{r mean-travel-time-freq-hist-labeled-IQR, echo = FALSE, eval = TRUE, fig.width = 6}
+average_median_work_travel <- county %>%
+  pull(mean_work_travel) %>%
+  median()
+iqr_lower_mean_work_travel <- county %>%
+  pull(mean_work_travel) %>%
+  quantile(probs = combine(0.25), type = 1)
+iqr_upper_mean_work_travel <- county %>%
+  pull(mean_work_travel) %>%
+  quantile(probs = combine(0.75), type = 1)
+county %>%
+  ggplot(mapping = aes(x = mean_work_travel)) +
+  geom_histogram(binwidth = 1, fill = "turquoise2", color = "turquoise4") +
+  geom_vline(xintercept = iqr_lower_mean_work_travel, color = "indianred3", size = 1) +
+  geom_vline(xintercept = iqr_upper_mean_work_travel, color = "indianred3", size = 1) +
+  geom_vline(xintercept = average_median_work_travel, color = "black", size = 0.50) +
+  annotate(
+    "rect",
+    xmin = iqr_lower_mean_work_travel,
+    xmax = iqr_upper_mean_work_travel,
+    ymin = -Inf,
+    ymax = Inf,
+    fill = "indianred2",
+    alpha = 0.30
+  ) +
+  labs(
+    title = "Average work travel times across 3143 US counties, 2006-2010",
+    x = "Average work travel time (min)",
+    y = "count"
+  )
+```
+
+---
+
+class: middle, center, inverse
+
+# From histograms to probability mass functions
+
+---
+
+# Data distributions
+
+* We've already learned that histograms (`geom_histogram()`) are a convenient way to represent numerical data in a single column (variable)
+
+--
+
+```{r county-mean-driving-table-head, eval = TRUE, echo = FALSE}
+county %>%
+  select(mean_work_travel) %>%
+  head(7) %>%
+  rbind(combine("...")) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# Data distributions
+
+* We've already learned that histograms (`geom_histogram()`) are a convenient way to represent numerical data in a single column (variable)
+
+```{r county-mean-driving-histogram-binsize-2, eval = TRUE, echo = FALSE}
+county %>%
+  ggplot() +
+  geom_histogram(mapping = aes(x = mean_work_travel), binwidth = 2,
+                 center = 0, color = "cyan4", fill = "cyan2") +
+  labs(y = "frequency") +
+  annotate("text", x = 40, y = 450, label = "binwidth = 2", hjust = 0.5,
+           vjust = 0.5, size = 5) +
+  coord_cartesian(xlim = combine(2.5, 47.5), ylim = combine(0, 475))
+```
+
+--
+
+* A histogram represents the **frequency** that values show up for a given variable
+
+--
+
+* `binwidth` changes the "buckets" for the data, impacting the frequency heights.
+
+---
+
+count: false
+
+# Data distributions
+
+* We've already learned that histograms (`geom_histogram()`) are a convenient way to represent numerical data in a single column (variable)
+
+```{r county-mean-driving-histogram-binsize-1, eval = TRUE, echo = FALSE}
+county %>%
+  ggplot() +
+  geom_histogram(mapping = aes(x = mean_work_travel), binwidth = 1,
+                 center = 0, color = "cyan4", fill = "cyan2") +
+  labs(y = "frequency") +
+  annotate("text", x = 40, y = 450, label = "binwidth = 1", hjust = 0.5,
+           vjust = 0.5, size = 5) +
+  coord_cartesian(xlim = combine(2.5, 47.5), ylim = combine(0, 475))
+```
+
+* A histogram represents the **frequency** that values show up for a given variable
+
+* `binwidth` changes the "buckets" for the data, impacting the frequency heights
+
+---
+
+# .font70[Comparing distributions with unequal observations]
+
+* So far, we've largely skipped over the question of how to compare distributions with varying numbers of observations
+
+--
+
+* In our current example of average times to travel to work, we can group the data by state and compare Virginia to Maryland
+
+--
+
+```{r county-va-md-mean-driving-histogram, eval = TRUE, echo = FALSE, out.width = "55%", fig.width = 5}
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = mean_work_travel, fill = state, color = state),
+    binwidth = 2, center = 0, position = "identity", alpha = 0.4) +
+  labs(y = "frequency") +
+  coord_fixed() +
+  coord_cartesian(xlim = combine(2.5, 47.5))
+```
+--
+
+.qa[
+In which state am I more likely to have a 30 minute commute?
+]
+
+---
+
+count: false
+
+# .font70[Comparing distributions with unequal observations]
+
+* So far, we've largely skipped over the question of how to compare distributions with varying numbers of observations
+
+* In our current example of average times to travel to work, we can group the data by state and compare Virginia to Maryland
+
+```{r county-va-md-mean-driving-histogram, eval = TRUE, echo = FALSE, out.width = "55%", fig.width = 5}
+```
+
+--
+
+* In the dataset, Virginia has `r nrow(filter(county, state == "Virginia"))` counties compared to Maryland's `r nrow(filter(county, state == "Maryland"))` counties
+
+--
+
+* We need to **normalize** the frequency counts
+
+---
+
+# From frequency to probability
+
+* Normalization is straightforward, just divide the frequency count in each "bucket" by the total number of observations in the histogram
+
+--
+
+* If you group by categories, that you should divide by the number of observations in each group
+
+--
+
+* To normalize the histograms from the prior example, we need to divide the Virginia frequencies by `r nrow(filter(county, state == "Virginia"))` and the Maryland frequencies by `r nrow(filter(county, state == "Maryland"))`
+
+```{r county-va-md-mean-driving-histogram, eval = TRUE, echo = FALSE, out.width = "55%", fig.width = 5}
+```
+
+---
+
+count: false
+
+# From frequency to probability
+
+* Normalization is straightforward, just divide the frequency count in each "bucket" by the total number of observations in the histogram
+
+* If you group by categories, that you should divide by the number of observations in each group
+
+* To normalize the histograms from the prior example, we need to divide the Virginia frequencies by `r nrow(filter(county, state == "Virginia"))` and the Maryland frequencies by `r nrow(filter(county, state == "Maryland"))`
+
+```{r county-va-md-mean-driving-pmf, eval = TRUE, echo = FALSE, out.width = "55%", fig.width = 5}
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = mean_work_travel, y = ..density.., fill = state, color = state),
+    binwidth = 2, center = 0, position = "identity", alpha = 0.4) +
+  labs(y = "PMF") +
+  coord_cartesian(xlim = combine(2.5, 47.5))
+```
+
+---
+
+# Probability mass function (PMF)
+
+```{r county-va-md-mean-driving-pmf, eval = TRUE, echo = FALSE, out.width = "50%", fig.width = 5}
+```
+
+--
+
+* Just like a histogram, except that the bar heights reflect **probabilities** instead of **frequency counts**
+
+--
+
+* Allows for a meaningful comparison of distributions with different numbers of observations
+
+--
+
+.qa[
+In which state am I more likely to have a 30 minute commute?
+]
+--
+.answer[Maryland]
+
+---
+
+# Creating PMFs in R
+
+* With `ggplot2`, it's straightforward to convert a histogram into a PMF
+
+--
+
+.code80[
+```r
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = mean_work_travel, fill = state),
+    position = "identity",
+    alpha = 0.5
+  )
+```
+]
+
+---
+
+count: false
+
+# Creating PMFs in R
+
+* With `ggplot2`, it's straightforward to convert a histogram into a PMF
+
+.code80[
+```r
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+*   mapping = aes(x = mean_work_travel, fill = state),
+    position = "identity",
+    alpha = 0.5
+  )
+```
+]
+
+--
+
+```{r county-freq-to-pmf-1, eval = TRUE, echo = FALSE, out.width = "60%", fig.width = 5}
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = mean_work_travel, fill = state, color = state),
+    binwidth = 2,
+    center = 0,
+    position = "identity",
+    alpha = 0.5
+  ) +
+  labs(y = "frequency") +
+  coord_cartesian(xlim = combine(2.5, 47.5))
+```
+
+---
+
+count: false
+
+# Creating PMFs in R
+
+* With `ggplot2`, it's straightforward to convert a histogram into a PMF
+
+.code80[
+```r
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+*   mapping = aes(x = mean_work_travel, y = ..density.., fill = state),
+    position = "identity",
+    alpha = 0.5
+  )
+```
+]
+
+```{r county-freq-to-pmf-2, eval = TRUE, echo = FALSE, out.width = "60%", fig.width = 5}
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(
+      x = mean_work_travel, y = ..density.., fill = state, color = state
+    ),
+    binwidth = 2,
+    center = 0,
+    position = "identity",
+    alpha = 0.5
+  ) +
+  labs(y = "PMF") +
+  coord_cartesian(xlim = combine(2.5, 47.5))
+```
+
+---
+
+# Obtaining PMF values
+
+--
+
+1. Compute them manually
+
+--
+
+2. Extract them from your `ggplot2` visualization
+
+---
+
+count: false
+
+# Obtaining PMF values
+
+1. .lightgray[Compute them manually]
+
+2. Extract them from your `ggplot2` visualization
+
+--
+
+Assign the figure to a variable
+
+.code80[
+```{r county-extract-pmf-1, eval = TRUE, echo = TRUE}
+va_md_pmf_figure <- county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = mean_work_travel, y = ..density.., fill = state),
+    binwidth = 2,
+    center = 0
+  )
+```
+]
+
+--
+
+Use `ggplot_build()` with `purrr::pluck()` and `as_data_frame()` as follows:
+
+.code80[
+```{r county-extract-pmf-2, eval = TRUE, echo = TRUE}
+va_md_pmf_data <- va_md_pmf_figure %>%
+  ggplot_build() %>%
+  purrr::pluck("data", 1) %>%
+  as_data_frame()
+```
+]
+
+---
+
+count: false
+
+# Obtaining PMF values
+
+.code80[
+```{r county-extract-pmf-3, eval = TRUE, echo = TRUE}
+va_md_pmf_data %>%
+  glimpse()
+```
+]
+
+---
+
+count: false
+
+# Obtaining PMF values
+
+To get the Maryland PMF data:
+
+.code80[
+```{r county-md-pmf-data, eval = TRUE, echo = TRUE}
+md_pmf_data <- va_md_pmf_data %>%
+  filter(group == 1) %>%
+  select(x, density)
+```
+]
+
+```{r county-md-pmf-table, eval = TRUE, echo = FALSE}
+md_pmf_data %>%
+  head(7) %>%
+  rbind(rep("...", 2)) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# Obtaining PMF values
+
+To get the Virginia PMF data:
+
+.code80[
+```{r county-va-pmf-data, eval = TRUE, echo = TRUE}
+va_pmf_data <- va_md_pmf_data %>%
+  filter(group == 2) %>%
+  select(x, density)
+```
+]
+
+```{r county-va-pmf-table, eval = TRUE, echo = FALSE}
+va_pmf_data %>%
+  head(7) %>%
+  rbind(rep("...", 2)) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+class: middle, center, inverse
+
+# Cumulative distribution functions
+
+---
+
+# Data by percentile rank
+
+--
+
+* PMFs are handy exploratory tools, but as with histograms, the binwidth can strongly influence what your plot looks like
+
+--
+
+* We can overcome this problem if we convert the data into a sorted list of percentile ranks
+
+--
+
+* **Advantages**
+
+--
+
+  * Don't need to select a binsize
+
+--
+  
+  * Easier to compare similarities and differences of different data distributions
+
+--
+  
+  * Different classes of data distributions have distinct shapes
+  
+--
+
+* The **cumulative distribution function** (CDF) lets us map between percentile rank and each value in a data column
+
+---
+
+# Creating CDFs in R 
+
+`ggplot2` comes with a handy convenience function `stat_ecdf()`, which lets you create CDF functions from your data
+
+--
+
+```{r county-commute-cdf-all, eval = TRUE, echo = TRUE}
+county %>%
+  ggplot() +
+  stat_ecdf(mapping = aes(x = mean_work_travel)) +
+  labs(y = "CDF")
+```
+
+---
+
+count: false
+
+# Creating CDFs in R
+
+We can do all the usual operations, such as grouping by state
+
+--
+
+```{r county-commute-cdf-va-md, eval = TRUE, echo = TRUE}
+county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  ggplot() +
+  stat_ecdf(mapping = aes(x = mean_work_travel, color = state)) +
+  labs(y = "CDF")
+```
+
+---
+
+# Computing the CDF
+
+To compute the CDF, we use the `cume_dist()` function along with `filter()`, `group_by()`, and `mutate()`:
+
+.code80[
+```{r county-extract-cdf-2, eval = TRUE, echo = TRUE}
+va_md_cdf_df <- county %>%
+  filter(state == "Virginia" | state == "Maryland") %>%
+  group_by(state) %>%
+  mutate(cdf = cume_dist(mean_work_travel)) %>%
+  select(state, mean_work_travel, cdf)
+```
+]
+
+---
+
+count: false
+
+# Get CDF data out of plot
+
+```{r country-extract-cdf-table, eval = TRUE, echo = FALSE}
+va_md_cdf_df %>%
+  ungroup() %>%
+  arrange(desc(state), cdf, mean_work_travel) %>%
+  head(10) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+class: middle, center, inverse
+
+# Tidy data
+
+---
+
+# Principles
+
+.valign-slide[
+```{r tidy-data-schematic, out.width = "80%", echo = FALSE}
+knitr::include_graphics("../img/tidy_data_schematic.png")
+```
+
+1. Each variable must have its own column.
+
+2. Each observation (case) must have its own row.
+
+3. Each value must have its own cell.
+]
+
+---
+
+# Why should we care?
+
+.font90[
+First, according to [*R for Data Science*](http://r4ds.had.co.nz/),
+]
+
+--
+
+.font90[
+1. There’s a general advantage to picking one consistent way of storing data.
+   If you have a consistent data structure, it’s easier to learn the tools that work with it because they have an underlying uniformity.
+
+2. There’s a specific advantage to placing variables in columns because it allows R’s vectorised nature to shine.
+   As you learned in mutate and summary functions, most built-in R functions work with vectors of values.
+   That makes transforming tidy data feel particularly natural.
+]
+
+--
+
+.answer[
+**Translation:** Getting data into this form allows you to work on entire columns at a time using short and memorable commands
+]
+    
+--
+
+If you've programmed before, you are probably familiar with loops.
+In other languages, data manipulation may require you to tell your computer to scan the tabular dataset **one cell at a time**.
+--
+
+R can do this,
+--
+
+ but it's slow...
+
+--
+ 
+The "vectorized" tools of `tidyverse` are both faster and easier to understand!
+        
+---
+
+count: false
+
+# Why should we care?
+
+* There's a theoretical foundation to this, actually
+
+--
+
+* Closely related to the formalism of *relational databases*
+
+--
+    
+* If you follow these rules, your data will be in [Codd's 3rd normal form](https://en.wikipedia.org/wiki/Third_normal_form)
+--
+ (if this means anything to you)
+
+--
+
+* Helpful if you are working with a large or complex enough dataset that you need to store in a formal database, such as SQL databases (Postgresql, Mysql)
+
+--
+
+* Practically speaking, the tidying process makes the categories in your data more clear
+
+--
+
+* It makes analysis much easier too, because you can easily subdivide your data by category, and apply transformations where needed
+
+--
+
+* Provides a standardized, "best practices" way to structure and store our datasets
+
+--
+
+  * Note that you may not collect or input your data straight into tidy format
+    
+---
+    
+# Tidying ≠ Cleaning
+
+.valign-slide[
+* Data tidying does **not** encompass the entire data cleaning process
+
+* Data tidying only refers to reshaping things, such as moving columns and rows around
+
+* Cleaning operations, such as correcting spelling errors, renaming variables, etc., is a separate topic
+]
+
+---
+
+class: middle, center, inverse
+
+# `tidyr()` package
+
+---
+
+# Summary of `tidyr()` package
+
+--
+
+* Functions (commands) that allow you to reshape data 
+
+--
+
+* Oriented towards the kinds of datasets we've worked with previously, each column may be a different data type (numeric, string, logical, etc)
+
+--
+
+* Functions (commands) are typed in a way that's very similar to the `dplyr` *verbs*, such as `filter()` and `mutate()`
+
+--
+
+* `tidyr` verbs
+
+--
+
+  * `gather()`: transforms wide data to narrow data
+
+--
+
+  * `spread()`: transforms narrow data to wide data
+
+--
+
+  * `separate()`: make multiple columns out of a single column
+
+--
+
+  * `unite()`: make a single column out of multiple columns
+
+---
+
+# Simple examples from textbook
+
+.vhalign-slide[
+Follow along in RStudio
+]
+
+---
+
+# Credits
+
+.valign-slide[
+* Slides in the section [Statistical distributions](#4) adapted from the Chapter 1 [OpenIntro Statistics slides](https://github.com/OpenIntroOrg/openintro-statistics-slides) developed by Mine Çetinkaya-Rundel and made available under the [CC BY-SA 3.0 license](http://creativecommons.org/licenses/by-sa/3.0/us/).
+]

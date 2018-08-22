@@ -1,0 +1,119 @@
+---
+title: CDS-101-A01 <br> Class 8 <br> Statistical distributions
+author: Dr. Glasbrenner
+date: May 31, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 8: Statistical distributions
+.title-hline[
+## May 31, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+# Load dataset
+county <- read_rds("../data/county_complete.rds")
+```
+
+---
+
+# Announcements
+
+.valign-slide[
+* Homework 2 to be posted: <http://summer18.cds101.com/assignments/homework-2/>
+
+* Reading 8 from [R for Data Science](http://r4ds.had.co.nz/), questions due on June 1st by 9:00am
+
+  * From [chapter 12](http://r4ds.had.co.nz/tidy-data.html): section 12.1 through to the end of section 12.5
+]
+
+---
+
+class: middle, center, inverse
+
+# Practicing with real data: Chicago Towed Vehicles dataset
+
+---
+
+# Chicago Towing Data
+
+.valign-slide[
+* Data posted by the city of Chicago of Towed Vehicle information over the past 90 days: <https://data.cityofchicago.org/Transportation/Towed-Vehicles/ygr5-vcbg/>
+
+* Use your RStudio project for the .monospace[dplyr] demos for this activity: <https://classroom.github.com/a/eF7HdfVO>
+
+* Practice using .monospace[dplyr] by investigating this dataset!
+]
+
+---
+
+# Towing Data Questions
+
+.vhalign-slide[
+Before we begin, let's clean up the dataset up a little so that it's easier to work with
+
+Follow along in RStudio
+]
+
+---
+
+count: false
+
+# Towing Data Questions
+
+.vhalign-slide[
+.qa[
+What command would I run to group the towed vehicles by color and see a summary of how many cars of each color were impounded over the last 90 days?
+]
+
+.qa[
+What command would I run to see which day, over the last 90 days, saw the most cars impounded and the least cars impounded?
+]
+
+.qa[
+Come up with your own question to explore the dataset!
+]
+]
+
+---
+
+class: middle, center, inverse
+
+# Statistical distributions
+
+---
+
+# Credits
+
+.valign-slide[
+The slides with blue headers originate from the following source:
+
+* The Chapter 1 [OpenIntro Statistics slides](https://github.com/OpenIntroOrg/openintro-statistics-slides) developed by Mine Çetinkaya-Rundel and made available under the [CC BY-SA 3.0 license](http://creativecommons.org/licenses/by-sa/3.0/us/).
+]
+

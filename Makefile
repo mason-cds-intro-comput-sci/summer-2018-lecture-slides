@@ -3,24 +3,23 @@ include make.inc
 DIRS	=	class02																\
 			class04																\
 			class05																\
-			class06
-#			class06																\
-#			class07																\
-#			class08																\
-#			class09																\
-#			class10																\
-#			class11																\
-#			class12																\
-#			class13																\
-#			class14																\
-#			class15																\
-#			class16																\
-#			class17																\
-#			class18																\
-#			class19																\
-#			class20																\
-#			class21																\
-#			class22
+			class06																\
+			class07																\
+			class08																\
+			class09																\
+			class10																\
+			class11																\
+			class12																\
+			class13																\
+			class14																\
+			class15																\
+			class16																\
+			class17																\
+			class18																\
+			class19																\
+			class20																\
+			class21																\
+			class22
 
 .PHONY	:	clean env all $(DIRS)
 

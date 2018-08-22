@@ -1,0 +1,274 @@
+---
+title: CDS-101-A01 <br> Class 10 <br> Tidy data
+author: Dr. Glasbrenner
+date: June 4, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 10: Tidy data
+.title-hline[
+## June 4, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+```
+
+---
+
+# Announcements
+
+.valign-slide[
+* Homework 2 due on June 6th @ 11:59pm: <http://summer18.cds101.com/assignments/homework-2/>
+]
+
+---
+
+class: middle, center, inverse
+
+# `tidyr` package continued
+
+---
+
+# `tidyr` verbs
+
+* `gather()`: transforms wide data to narrow data
+
+* `spread()`: transforms narrow data to wide data
+
+* `separate()`: make multiple columns out of a single column
+
+* `unite()`: make a single column out of multiple columns
+
+---
+
+# Simple examples from textbook
+
+.vhalign-slide[
+Follow along in RStudio
+]
+
+---
+
+# `spread()` example
+
+Untidy data frame stored in `table2`
+
+.font80[
+```{r untidy-table2, echo = FALSE}
+table2 %>%
+  knitr::kable(format = "html")
+```
+]
+
+---
+
+# `spread()` example
+
+```r
+table2 %>%
+  spread(key = type, value = count)
+```
+
+```{r tidy-up-table2, echo = FALSE}
+table2 %>%
+  spread(key = type, value = count) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# `separate()` example
+
+Untidy data frame stored in `table3`
+
+```{r untidy-table3, echo = FALSE}
+table3 %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# `separate()` example
+
+```r
+table3 %>%
+  separate(
+    col = rate,
+    into = combine("cases", "population")
+  )
+```
+
+```{r tidy-up-table3, echo = FALSE}
+table3 %>%
+  separate(col = rate, into = combine("cases", "population")) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# `separate()` example
+
+```r
+table3 %>%
+  separate(
+    col = rate,
+    into = combine("cases", "population"),
+*   sep = "/",              # Set the separating symbol
+  )
+```
+
+```{r tidy-up-table3, echo = FALSE}
+```
+
+---
+
+count: false
+
+# `separate()` example
+
+```r
+table3 %>%
+  separate(
+    col = rate,
+    into = combine("cases", "population"),
+    sep = "/",              # Set the separating symbol
+*   convert = TRUE          # Convert data types, ensures that  
+  )                         # cases and population cols are numeric
+```
+
+```{r tidy-up-table3, echo = FALSE}
+```
+
+---
+
+# `unite()` example
+
+Untidy data frame stored in `table5`
+
+```{r untidy-table5, echo = FALSE}
+table5 %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# `unite()` example
+
+```r
+table5 %>%
+  unite(new, century, year)
+```
+
+```{r tidy-up-table5, echo = FALSE}
+table5 %>%
+  unite(new, century, year) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# `unite()` example
+
+```r
+table5 %>%
+  unite(new, century, year, sep = "")
+```
+
+```{r tidy-up-table5-sep, echo = FALSE}
+table5 %>%
+  unite(new, century, year, sep = "") %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# `unite()` example
+
+```r
+table5 %>%
+  unite(new, century, year, sep = "") %>%
+  mutate(new = as.integer(new)) %>%   #  Change data type to integer
+  rename(year = new)                  #  Rename column to year
+```
+
+```{r tidy-up-table5-sep-rename-datatype, echo = FALSE}
+table5 %>%
+  unite(new, century, year, sep = "") %>%
+  mutate(new = as.integer(new)) %>%
+  rename(year = new) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+class: middle, center, inverse
+
+# Class activity
+
+---
+
+# Tidy gradebook dataset exercise
+
+.vhalign-slide[
+Download the Github Classroom repo [linked in channel .mono[\#su18-a01-activities] on Slack](https://masoncds101.slack.com/messages/GATUBQDJA) and complete the following exercises:
+
+1. Make the dataset tidy using either `gather()` or `spread()`. The tidy gradebook should have one observation per row, which gives all the grades a student has received for the different assignments in the semester.
+
+2. Use the tidy gradebook and create a histogram that answers the question, "What was the grade distribution for the Midterm Exam?"
+
+Remember to commit and push your work!
+]
+
+---
+
+class: middle, center, inverse
+
+# Introduce the midterm project
+
+---
+
+# Midterm project instructions
+
+.vhalign-slide[
+Follow along on printed handout.
+]
+
+---
+
+# Credits
+
+.valign-slide[
+* Examples in the section [.monospace[tidyr] package continued](#4) taken from [Chapter 12](http://r4ds.had.co.nz/tidy-data.html) of [*R for Data Science*](http://r4ds.had.co.nz) written by Garrett Grolemund and Hadley Wickham and made available under the [CC BY-NC-ND 3.0 license](http://creativecommons.org/licenses/by-nc-nd/3.0/us/).
+]

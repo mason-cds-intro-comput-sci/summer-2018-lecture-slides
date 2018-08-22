@@ -1,0 +1,1060 @@
+---
+title: CDS-101-001 <br> Class 16 <br> Inference and simulation II
+author: Dr. Glasbrenner
+date: June 12, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 16: Inference and simulation II
+.title-hline[
+## June 12, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(infer))
+# Set seed
+set.seed(702083)
+# Synthetic dataset
+college_apps <- data_frame(
+  number_colleges = rbinom(
+    n = 206,
+    prob = (9.7 / 206),
+    size = 206
+  ) 
+)
+# yawn dataset
+yawn <- read_csv("http://summer18.cds101.com/files/datasets/yawn.csv")
+```
+
+---
+
+# Annoucements
+
+.valign-slide[
+* Questions for Reading 13 due on **June 13** by 9:00am: [Introductory Statistics with Randomization and Simulation](http://summer18.cds101.com/doc/Diez_Barr_%C3%87etinkaya-Rundel_IntroductoryStatisticsWithRandomizationAndSimulation.pdf)
+
+  * From chapter 2: section 2.4 through to the end of section 2.5
+
+  * From chapter 4: section 4.5 (skip 4.5.3)
+
+* Homework 3 due by **11:59pm on Wednesday, June 13th**
+
+* Midterm reports and presentation slides due at the start of class on Thursday, June 14th
+]
+
+---
+
+class: middle, center, inverse
+
+# Using R to analyze the gender discrimination study
+
+---
+
+# Simulations in R
+
+Introduce a new package: `infer`
+
+--
+
+Download by running:
+
+.code80[
+```r
+install.packages("infer")
+```
+]
+
+--
+
+Use gender discrimation dataset:
+
+.code80[
+```{r infer-example-1, echo = TRUE, eval = TRUE}
+applicants_data <- data_frame(
+  sex = combine(
+    rep("Male", 24),
+    rep("Female", 24)
+  ),
+  outcome = combine(
+    rep("Promoted", 21),
+    rep("Not Promoted", 3),
+    rep("Promoted", 14),
+    rep("Not Promoted", 10)
+  )
+)
+
+experiment_result <- (21/24) - (14/24)
+```
+]
+
+---
+
+# .font90[Recap of gender discrimination dataset]
+
+```{r exp-result-round, eval = TRUE, echo = FALSE}
+experiment_result_round <- round(experiment_result, 3)
+experiment_result_round_percent <- 100 * experiment_result_round
+```
+
+.valign-slide[
+* Experiment involving 48 male bank supervisors that were each given the same personnel file and asked to judge whether the person should be promoted to a branch manager job that was described as "routine"
+
+* The files were identical except that half of the supervisors had files showing the person was male while the other half had files showing the person was female
+
+* It was randomly determined which supervisors got "male" applications and which got "female" applications
+
+* **Result: `r experiment_result_round_percent`% more men than women were recommended for promotion**
+
+.qa[
+Is this result statistically significant?
+]
+]
+
+---
+
+# .font90[Using `infer` to build the null distribution]
+
+* To test the alternative hypothesis that "women were less likely than men to be hired", we need to generate a null distribution using the `infer` package:
+
+--
+
+```{r gender-discimination-null, eval = TRUE, echo = TRUE}
+simulation_results <- applicants_data %>%
+  specify(outcome ~ sex, success = "Promoted") %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in props", order = combine("Male", "Female"))
+```
+
+---
+
+layout: true
+
+# .font90[Using `infer` to build the null distribution]
+
+* To test the alternative hypothesis that "women were less likely than men to be hired", we need to generate a null distribution using the `infer` package:
+
+---
+
+count: false
+
+```r
+simulation_results <- applicants_data %>%
+* specify(outcome ~ sex, success = "Promoted") %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in props", order = combine("Male", "Female"))
+```
+
+--
+
+* In `specify(outcome ~ sex, success = "Promoted")`, the first part .mono[outcome ~ sex] is a formula where the lefthand variable .mono[outcome] is the response and the righthand variable .mono[sex] is explanatory.
+
+---
+
+count: false
+
+```r
+simulation_results <- applicants_data %>%
+  specify(outcome ~ sex, success = "Promoted") %>%
+* hypothesize(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in props", order = combine("Male", "Female"))
+```
+
+--
+
+* In `hypothesize(null = "independence")`, we specify that we will simulate what will happen if .mono[outcome] and .mono[sex] were independent.
+
+---
+
+count: false
+
+```r
+simulation_results <- applicants_data %>%
+  specify(outcome ~ sex, success = "Promoted") %>%
+  hypothesize(null = "independence") %>%
+* generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in props", order = combine("Male", "Female"))
+```
+
+--
+
+* In `generate(reps = 10000, type = "permute")`, we specify that we will run 10,000 simulations by permuting the .mono[outcome] and .mono[sex] columns
+
+--
+
+* To permute, we randomly shuffle the data in the .mono[outcome] column, and then randomly shuffle the data in the .mono[sex] column 
+
+---
+
+count: false
+
+```r
+simulation_results <- applicants_data %>%
+  specify(outcome ~ sex, success = "Promoted") %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+* calculate(stat = "diff in props", order = combine("Male", "Female"))
+```
+
+--
+
+*   Using `calculate(stat = "diff in props", order = combine("Male", "Female"))` means, after each simulation, compute:
+    \\[\\frac{\\text{Promoted Men}}{\\text{Total Men}} - \\frac{\\text{Promoted Men}}{\\text{Total Men}}\\]
+--
+    Note that this is exactly how `experiment_result` was calculated.
+
+---
+
+layout: false
+
+# Visualizing the null distribution
+
+.valign-slide[
+```r
+simulation_results %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = stat, y = ..density..),
+    center = 0,
+    bins = 9
+  ) +
+  geom_vline(xintercept = experiment_result, color = "indianred3") +
+  labs(
+    title = "Gender discrimination null distribution",
+    x = "difference in fraction of male and female promotions",
+    y = "PMF"
+  )
+```
+]
+
+---
+
+count: false
+
+# Visualizing the null distribution
+
+```{r infer-example-3, echo = FALSE, eval = TRUE, out.width = "95%"}
+simulation_results %>%
+  ggplot() +
+  geom_histogram(
+    mapping = aes(x = stat, y = ..density..),
+    center = 0,
+    bins = 9
+  ) +
+  geom_vline(xintercept = experiment_result, color = "indianred3") +
+  labs(
+    title = "Gender discrimination null distribution",
+    x = "difference in fraction of male and female promotions",
+    y = "PMF"
+  )
+```
+
+---
+
+# .font90[Probability of randomly getting result]
+
+One way we can quantify the probability that the experiment's result is due to statistical variance is to compute how much of the null distribution represents outcomes that are the same or more extreme than the actual experiment:
+
+```r
+simulation_results %>%
+  filter(stat >= 0.875 - 0.583) %>%
+  summarize(random_result_probability = n() / 10000)
+```
+
+```{r infer-example-4, echo = FALSE, eval = TRUE}
+simulation_results %>%
+  filter(stat >= 0.875 - 0.583) %>%
+  summarize(random_result_probability = n() / 10000) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# Conclusions from our simulation
+
+.qa[
+Do the results of the simulation provide convincing evidence of gender discrimination against women, i.e. dependence between gender and promotion decisions?
+]
+
+1. No, the data do not provide convincing evidence for the alternative hypothesis, therefore we can't reject the null hypothesis of independence between gender and promotion decisions. The observed difference between the two proportions was due to chance.
+
+2. Yes, the data provide convincing evidence for us to reject the null hypothesis in favor of the alternative hypothesis of gender discrimination against women in promotion decisions. The observed difference between the two proportions was due to a real effect of gender.
+
+---
+
+count: false
+
+# Conclusions from our simulation
+
+.qa[
+Do the results of the simulation provide convincing evidence of gender discrimination against women, i.e. dependence between gender and promotion decisions?
+]
+
+1. No, the data do not provide convincing evidence for the alternative hypothesis, therefore we can't reject the null hypothesis of independence between gender and promotion decisions. The observed difference between the two proportions was due to chance.
+
+2. .red[Yes, the data provide convincing evidence for us to reject the null hypothesis in favor of the alternative hypothesis of gender discrimination against women in promotion decisions. The observed difference between the two proportions was due to a real effect of gender.]
+
+---
+
+class: middle, center, inverse
+
+# Constructing hypothesis tests
+
+---
+
+# Number of college applications
+
+.footnote[
+http://www.collegeboard.com/student/apply/the-application/151680.html
+]
+
+.qa[
+A survey asked how many colleges students applied to, and 206 students responded to this question.
+This sample yielded an average of 9.7 college applications with a standard deviation of 7.
+College Board website states that counselors recommend students apply to roughly 8 colleges.
+Do these data provide convincing evidence that the average number of colleges all GMU students apply to is *higher* than recommended?
+]
+
+---
+
+# Setting the hypotheses
+
+* The **parameter of interest** is the average number of schools applied to by *all* GMU students.
+
+--
+
+* There may be two explanations why our sample mean is higher than the recommended 8 schools.
+
+  * The true population mean is different
+  * The true population mean is 8, and the difference between the true population mean and the sample mean is simply due to natural sampling variability
+
+--
+
+* We start with the assumption the average number of colleges GMU students apply to is 8 (as recommended)
+
+  .center[*H<sub>0</sub>* : *μ* = 8]
+
+--
+
+* We test the claim that the average number of colleges GMU students apply to is greater than 8
+
+  .center[*H<sub>A</sub>* : *μ* > 8]
+
+---
+
+class: middle, center, inverse
+
+# Formal testing using p-values
+
+---
+
+# Statistical significance
+
+Say that we conducted this study by polling an independent and representative sample of GMU students about how many colleges they applied to, and obtained a sample mean of 9.7.
+
+--
+
+The national average is 8.
+
+--
+
+**Is this result statistically significant?**
+
+--
+
+In order to evaluate if the observed sample mean is unusual for the hypothesized sampling distribution, we do the following:
+
+* Choose a value for the significance level *⍺* (a common choice is 5%)
+
+--
+
+* Determine the percentile rank of the observed sample mean relative to the null distribution
+
+---
+
+# p-values
+
+* We then use the percentile to calculate the **p-value**, the probability of observing data at least as favorable to the alternative hypothesis as our current data set, if the null hypothesis were true.
+
+--
+
+* If the p-value is **lower** than the significance level *⍺*, we say that it would be very unlikely to observe the data if the null hypothesis were true, and hence **reject _H<sub>0</sub>_**.
+
+--
+
+* If the p-value is **higher** than *⍺*, we say that it is likely to observe the data even if the null hypothesis were true, and hence **do not reject _H<sub>0</sub>_**.
+
+---
+
+# .font80[Number of college applications p-value]
+
+.pull-left[
+**p-value:** probability of observing data at least as favorable to *H<sub>A</sub>* as our current data set (a sample mean greater than 9.7), if in fact *H<sub>0</sub>* were true (the true population mean was 8).
+]
+
+--
+
+.pull-right[
+```{r app-pvalues-result, eval = TRUE, echo = FALSE, fig.width=6, out.width = "100%"}
+ggplot(data = college_apps) +
+  geom_histogram(
+    mapping = aes(x = number_colleges),
+    binwidth = 1,
+    center = 0
+  ) +
+  labs(
+    title = "Student poll: number of college applications they submitted",
+    subtitle = "Sample size: 206"
+  )
+```
+]
+
+---
+
+count: false
+
+# .font80[Number of college applications p-value]
+
+.pull-left[
+**p-value:** probability of observing data at least as favorable to *H<sub>A</sub>* as our current data set (a sample mean greater than 9.7), if in fact *H<sub>0</sub>* were true (the true population mean was 8).
+]
+
+.pull-right[
+```{r app-pvalues-result, eval = TRUE, echo = FALSE, fig.width=6, out.width = "100%"}
+```
+]
+
+.code70[
+```{r college-apps-null-distribution}
+college_apps_null <- college_apps %>%
+  specify(formula = number_colleges ~ NULL) %>%
+  hypothesize(null = "point", mu = 8) %>%
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+]
+
+.code70[
+```{r college-apps-pvalue-calculate, eval = TRUE, echo = TRUE}
+college_apps_p_value <- college_apps_null %>%
+  filter(stat >= 9.7) %>%
+  summarize(p_value = n() / 10000)
+```
+]
+
+--
+
+```{r college-apps-pvalue-table, eval = TRUE, echo = FALSE, results = "asis"}
+college_apps_p_value %>%
+  pull(p_value) %>%
+  glue::glue(".answer[", "p-value = ", ., "]")
+```
+
+---
+
+count: false
+
+# Number of applications p-value
+
+.code70[
+```{r college-apps-null-distribution-pvalue, dpi = 150}
+ggplot(data = college_apps_null) +
+  geom_histogram(mapping = aes(x = stat, y = ..density..)) +
+  geom_vline(xintercept = 8, linetype = "dashed", size = 1) +
+  geom_vline(xintercept = 9.7, color = "indianred3", size = 1) +
+  labs(
+    x = "mean number of applications",
+    y = "PMF",
+    title = "College applications null distribution"
+  )
+```
+]
+
+---
+
+# .font70[Number of college applications - Making a decision]
+
+```{r extract-vars-for-slides, echo = FALSE, eval = TRUE}
+college_apps_p_value_raw <- college_apps_p_value %>%
+  pull(p_value)
+college_apps_p_value_percentage <- round(
+  x = college_apps_p_value_raw * 100,
+  digits = 2
+)
+```
+
+* p-value = `r college_apps_p_value_raw`
+
+--
+
+* If the true average of the number of colleges GMU students applied to is 8, there is a `r college_apps_p_value_percentage`% chance of observing a random sample of 206 GMU students who on average apply to 9.7 or more schools.
+
+--
+
+* This is a pretty low probability for us to think that a sample mean of 9.7 or more schools is likely to happen simply by chance.
+
+--
+
+* Since p-value is **low** (lower than 5%) we **reject _H<sub>0</sub>_**.
+
+--
+
+* The data provide convincing evidence that GMU students apply to more than 8 schools on average.
+
+--
+
+* The difference between the null value of 8 schools and observed sample mean of 9.7 schools is **not due to chance** or sampling variability.
+
+---
+
+class: middle, center, inverse
+
+# Two-sided hypothesis testing with p-values
+
+---
+
+# .font80[Two-sided hypothesis testing with p-values]
+
+* If the research question was "Do the data provide convincing evidence that the average amount of schools that GMU students apply to is **different** than the national average?", the alternative hypothesis would be different.
+
+  .center[*H<sub>0</sub>* : *μ* = 8]
+  .center[*H<sub>A</sub>* : *μ* ≠ 8]
+
+--
+
+* Hence the p-value could change as well:
+
+```{r college-apps-pvalue-two-sided-calculate, eval = TRUE, echo = TRUE}
+college_apps_p_value_two_sided <- college_apps_null %>%
+  filter(stat >= 9.7 | stat <= 6.3) %>%
+  summarize(p_value = n() / 10000)
+```
+  
+---
+
+count: false
+
+# .font80[Two-sided hypothesis testing with p-values]
+
+* If the research question was "Do the data provide convincing evidence that the average amount of schools that GMU students apply to is **different** than the national average?", the alternative hypothesis would be different.
+
+  .center[*H<sub>0</sub>* : *μ* = 8]
+  .center[*H<sub>A</sub>* : *μ* ≠ 8]
+
+* Hence the p-value could change as well:
+
+.pull-left[
+```{r app-pvalues-two-sided-results, eval = TRUE, echo = FALSE, out.width = "100%"}
+ggplot(data = college_apps_null) +
+  geom_histogram(
+    mapping = aes(x = stat, y = ..density..),
+    binwidth = 0.05,
+    center = 0
+  ) +
+  geom_vline(xintercept = 8, linetype = "dashed", size = 1) +
+  geom_vline(xintercept = 9.7, color = "indianred3", size = 1) +
+  geom_vline(xintercept = 6.3, color = "indianred3", size = 1) +
+  labs(
+    x = "mean number of applications",
+    y = "PMF",
+    title = "College applications null distribution (two-sided test)"
+  )
+```
+]
+
+.pull-right[
+```{r college-apps-two-sided-tasks, echo = FALSE, eval = TRUE, results = "asis"}
+college_apps_p_value_two_sided %>%
+  pull(p_value) %>%
+  glue::glue(".answer[", "p-value = ", ., "]")
+```
+]
+
+---
+
+# .font80[Two-sided hypothesis testing with p-values]
+
+* If the research question was "Do the data provide convincing evidence that the average amount of schools that GMU students apply to is **different** than the national average?", the alternative hypothesis would be different.
+
+  .center[*H<sub>0</sub>* : *μ* = 8]
+  .center[*H<sub>A</sub>* : *μ* ≠ 8]
+
+* Hence the p-value could change as well:
+
+.pull-left[
+```{r app-pvalues-two-sided-results, eval = TRUE, echo = FALSE, out.width = "100%"}
+```
+]
+
+.pull-right[
+```{r college-apps-two-sided-tasks, echo = FALSE, eval = TRUE, results = "asis"}
+```
+
+Although in this example, it does not change.
+]
+
+---
+
+class: middle, center, inverse
+
+# p-value for two-sided hypothesis test of gender discrimination dataset
+
+---
+
+# .font70[Gender discrimination dataset: two-sided hypothesis test]
+
+* We can use the same null distribution that we generated earlier
+
+--
+
+* In the two-sided hypothesis test, we need to count when the difference in the men and women hiring fractions is **larger** than `r experiment_result_round` and also when it is in the opposite extreme, which would be when the bias is towards hiring more women than men
+
+--
+
+* The opposite extreme corresponds to a difference in hiring fractions that is **less than** `r -experiment_result_round`
+  
+--
+
+* As before, we can filter the data just to keep these extreme outcomes, then divide the remaining rows and divide by 10,000
+
+```r
+simulation_results %>%
+  filter(stat >= experiment_result | stat <= -experiment_result) %>%
+  summarize(pvalue = n() / 10000)
+```
+
+--
+
+```{r two-sided-p-value, echo = FALSE, eval = TRUE}
+simulation_results %>%
+  filter(stat >= experiment_result | stat <= -experiment_result) %>%
+  summarize(pvalue = n() / 10000) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# .font90[Visualization of null distribution (two-sided)]
+
+```{r gender-discrimination-pvalues-two-sided, eval = TRUE, echo = FALSE, out.width = "100%"}
+ggplot(data = simulation_results) +
+  geom_histogram(
+    mapping = aes(x = stat, y = ..density..),
+    bins = 9,
+    center = 0
+  ) +
+  geom_vline(xintercept = experiment_result, color = "indianred3", size = 1) +
+  geom_vline(xintercept = -experiment_result, color = "indianred3", size = 1) +
+  labs(
+    x = "difference in fraction of male and female promotions",
+    y = "PMF",
+    title = "Gender discrimination null distribution"
+  )
+```
+
+---
+
+class: middle, center, inverse
+
+# Mythbusting statistics
+
+---
+
+# Mythbusters yawning experiment
+
+.footnote[
+Episode 28: *Is Yawning Contagious?*, first aired on March 9, 2005
+]
+
+An experiment conducted by the *MythBusters*, a science entertainment TV program that aired on the Discovery Channel, tested the following hypothesis:
+
+> It becomes more likely for a person to yawn if another person near them yawns.
+
+--
+
+To conduct the experiment, the team drove 50 volunteers, one at a time, to a flea market in a van, and one of the team members, Kari, would either yawn (treatment) or not yawn (no treatment) during the ride.
+
+--
+
+The 50 people were randomly assigned to two groups:
+
+--
+
+* **Treatment group**: 34 people where a person near them yawned
+  
+* **Control group**: 16 people where there wasn't a person yawning near them
+
+---
+
+# Mythbusters yawning experiment
+
+```{r yawn-mythbusters-stats-table, eval = TRUE, echo = FALSE}
+num_participants_per_group <- yawn %>%
+  count(group) %>%
+  rename(total = n)
+
+yawn %>%
+  filter(yawn == "yes") %>%
+  group_by(group) %>%
+  summarize(yawns = n()) %>%
+  left_join(num_participants_per_group, by = combine("group")) %>%
+  mutate(fraction_yawned = round(yawns / total, 4)) %>%
+  knitr::kable(format = "html")
+```
+
+.font90[On the show they presented the above results, concluding that the myth was confirmed because there was a 4% increase in yawns between the control and treatment groups.]
+
+--
+
+.qa[
+Having learned how to carry out a hypothesis test with `infer`, do the data allow us to draw the same conclusions as the *Mythbusters*?
+]
+
+--
+
+.font90[Let's step through a series of guided questions to work this out.]
+
+.code80[
+```r
+library(tidyverse)
+library(infer)
+yawn <- read_csv(
+  "http://summer18.cds101.com/files/datasets/yawn.csv"
+)
+experiment_result <- 10/34 - 4/16
+```
+]
+
+---
+
+# The .monospace[yawn] dataset
+
+```{r yawn-table, eval = TRUE, echo = FALSE}
+yawn %>%
+  head(5) %>%
+  rbind(rep("...", 3)) %>%
+  rbind(tail(yawn, 5)) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# Question 1
+
+.qa[
+In this experiment, what is the **explanatory** variable and what is the **response** variable?
+What value in the **response** value should be classified as a success? 
+]
+
+--
+
+* **explanatory** → `group`
+
+* **response** → `yawn`
+
+---
+
+# Question 2
+
+.qa[
+To conduct the hypothesis test, we need to simulate the null distribution.
+What quantity will we compute so we can build the null distribution?
+]
+
+1.  The mean number of `yawns` in the treatment group
+
+2.  The mean `fraction_yawned` in the treatment group
+
+3.  The mean difference in `yawns` between the treatment and control groups
+
+4.  The mean difference in  `fraction_yawned` between the treatment and control groups
+
+---
+
+count: no
+
+# Question 2
+
+.qa[
+To conduct the hypothesis test, we need to simulate the null distribution.
+What quantity will we compute so we can build the null distribution?
+]
+
+1.  The mean number of `yawns` in the treatment group
+
+2.  The mean `fraction_yawned` in the treatment group
+
+3.  The mean difference in `yawns` between the treatment and control groups
+
+4.  .red[The mean difference in  `fraction_yawned` between the treatment and control groups]
+
+---
+
+# Question 3
+
+.qa[
+When building up our `infer`-based simulation, what should the arguments for `specify()` be?
+Generally, the structure of specify is:
+
+```{r specify-formula, eval = FALSE, echo = TRUE}
+specify(formula = variable1 ~ variable2, success = "success_label")
+```
+
+The words `variable1`, `variable2`, and `"success_label"` are placeholders.
+Based on your response to question 1, tell me what to fill in for these three placeholders.
+]
+
+--
+
+```{r specify-formula-answer, eval = FALSE, echo = TRUE}
+specify(formula = yawn ~ group, success = "yes")
+```
+
+---
+
+# Question 4
+
+.qa[
+For a hypothesis test, `specify()` is piped into `hypothesize()`.
+What should the arguments for `hypothesize()` be?
+]
+
+1.  .mono[hypothesize(null = "independence")]
+
+2.  .mono[hypothesize(null = "point")]
+
+---
+
+count: no
+
+# Question 4
+
+.qa[
+For a hypothesis test, `specify()` is piped into `hypothesize()`.
+What should the arguments for `hypothesize()` be?
+]
+
+1.  `hypothesize(null = "independence")`
+
+2.  .mono[hypothesize(null = "point")]
+
+---
+
+# Question 5
+
+.qa[
+Next, we pipe `hypothesize()` into `generate()`, which is where we say how many simulations we want to run to generate the null distribution.
+
+The structure of `generate()` is:
+
+```{r generate-formula, eval = FALSE, echo = TRUE}
+generate(reps = number,  type = "simulation_type")
+```
+
+`reps` is an integer, and type can be `"bootstrap"`, `"permute"`, or `"simulate"`.
+
+`number` and `"simulation_type"` are placeholders.
+
+If we want to run 10,000 simulations to create the null distribution for this dataset, what should I replace the placeholders with?
+]
+
+--
+
+```{r generate-formula-answer, eval = FALSE, echo = TRUE}
+generate(reps = 10000,  type = "permute")
+```
+
+---
+
+# Question 6
+
+.qa[
+Next, we pipe `generate()` into `calculate()`, which is where we say what quantity is being measured.
+
+The structure of `calculate()` is:
+
+```{r calculate-formula, eval = FALSE, echo = TRUE}
+calculate(stat = "compute_stat",  order = combine("level1", "level2"))
+```
+
+`"compute_stat"` and `combine("level1", "level2")` are placeholders.
+
+The `stat` argument can be one of the following: `"mean"`, `"median"`, `"sd"`, `"prop"`, `"diff in means"`, `"diff in medians"`, `"diff in props"`, `"Chisq"`, `"F"`, and `"slope"`.
+
+The labels put in the `order` argument correspond to levels in the explanatory variable.
+
+Based on your response to question 2, what should I replace the placeholders with?
+]
+
+--
+
+```{r calculate-formula-answer, eval = FALSE, echo = TRUE}
+calculate(stat = "diff in props",  order = combine("Treatment", "Control"))
+```
+
+---
+
+# Question 7
+
+.qa[
+Take your answers to questions 3 through 6 and write the `infer` code needed to simulate the null distribution for this experiment.
+]
+
+--
+
+```{r yawn-null-simulation, eval = TRUE, echo = TRUE}
+yawn_null <- yawn %>%
+  specify(yawn ~ group, success = "yes") %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in props", order = combine("Treatment", "Control"))
+```
+
+---
+
+# Question 8
+
+.qa[
+Use the simulated null distribution you obtained in question 7 and find the p-value of a **one-sided hypothesis test**.
+]
+
+--
+
+```r
+yawn_null %>%
+  filter(stat >= experiment_result) %>%
+  summarize(pvalue = n() / 10000)
+```
+
+```{r yawn-p-value-one-sided, eval = TRUE, echo = FALSE}
+experiment_result <- 10/34 - 4/16
+yawn_null_one_side <- yawn_null %>%
+  filter(stat >= experiment_result) %>%
+  summarize(pvalue = n() / 10000)
+yawn_null_one_side %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# Question 9
+
+.qa[
+Use the simulated null distribution you obtained in question 7 and find the p-value of a **two-sided hypothesis test**.
+]
+
+--
+
+```r
+yawn_null %>%
+  filter(stat >= experiment_result | stat <= -experiment_result) %>%
+  summarize(pvalue = n() / 10000)
+```
+
+```{r yawn-p-value-two-sided, eval = TRUE, echo = FALSE}
+yawn_null_two_side <- yawn_null %>%
+  filter(stat >= experiment_result | stat <= -experiment_result) %>%
+  summarize(pvalue = n() / 10000)
+yawn_null_two_side %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# Question 10
+
+.qa[
+Create a plot that shows the meaning of the *p*-value for one-sided and two-sided hypothesis tests.
+]
+
+--
+
+.code70[
+```{r yawn-null-histogram-one-sided, eval = TRUE, echo = TRUE, out.width = "50%"}
+ggplot(yawn_null) +
+  geom_histogram(mapping = aes(x = stat, y = ..density..), binwidth = 0.05) + 
+  geom_vline(xintercept = experiment_result, color = "indianred3", size = 1) +
+  labs(
+    title = "p-value meaning for one-sided test",
+    x = "difference in yawn fractions",
+    y = "PMF"
+  )
+```
+]
+
+---
+
+count: no
+
+# Question 10
+
+.qa[
+Create a plot that shows the meaning of the *p*-value for one-sided and two-sided hypothesis tests.
+]
+
+.code70[
+```{r yawn-null-histogram-two-sided, eval = TRUE, echo = TRUE, out.width = "50%"}
+ggplot(yawn_null) +
+  geom_histogram(mapping = aes(x = stat, y = ..density..), binwidth = 0.05) + 
+  geom_vline(xintercept = experiment_result, color = "indianred3", size = 1) +
+  geom_vline(xintercept = -experiment_result, color = "indianred3", size = 1) +
+  labs(
+    title = "p-value meaning for two-sided test",
+    x = "difference in yawn fractions",
+    y = "PMF"
+  )
+```
+]
+
+---
+
+# Question 11
+
+.qa[
+For a significance level of $\alpha = 0.05$, are we able to reject the null hypothesis for either one of the tests?
+]
+
+--
+
+.answer[
+* p-value of one-sided test: `r yawn_null_one_side$pvalue`
+
+* p-value of two-sided test: `r yawn_null_two_side$pvalue`
+
+Both are larger than $\alpha = 0.05$, hence we cannot reject the null hypothesis in either test.
+]
+
+
+---
+# Credits
+
+.valign-slide[
+Portions of these slides were adapted from the chapter 3 [OpenIntro Statistics slides](https://github.com/OpenIntroOrg/openintro-statistics-slides) developed by Mine Çetinkaya-Rundel and made available under the [CC BY-SA 3.0 license](http://creativecommons.org/licenses/by-sa/3.0/us/).
+]

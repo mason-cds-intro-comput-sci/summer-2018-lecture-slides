@@ -1,0 +1,183 @@
+---
+title: CDS-101-001 <br> Class 14 <br> Midterm project conferences and R questions
+author: Dr. Glasbrenner
+date: June 8, 2018
+---
+
+class: center, middle, title-slide
+
+.upper-right[
+```{r logo, echo = FALSE, out.width = "605px"}
+knitr::include_graphics("../img/cds-101-a01-logo.png")
+```
+]
+
+.lower-right[
+```{r cc-by-sa, echo = FALSE, out.width = "88px"}
+knitr::include_graphics("../img/cc-by-sa.png")
+```
+
+These slides are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+]
+
+# Class 14: Midterm project conferences and R questions
+.title-hline[
+## June 8, 2018
+]
+
+---
+
+class: middle, center, inverse
+
+# General
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+source("../src/xaringan_setup.R")
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+# Load datasets
+college <- read_csv(
+  file = "../data/Most-Recent-Cohorts-All-Data-Elements.csv.gz",
+  na = combine("NULL", "NA")
+)
+```
+
+---
+
+# Annoucements
+
+.valign-slide[
+* Reading 11: [Introductory Statistics with Randomization and Simulation](http://summer18.cds101.com/doc/Diez_Barr_%C3%87etinkaya-Rundel_IntroductoryStatisticsWithRandomizationAndSimulation.pdf)
+
+  * From chapter 2: from the beginning through to the end of section 2.3
+
+* Homework 3 due by 11:59pm on Tuesday, June 12th
+
+* Rough draft of your question responses due on Monday
+]
+
+---
+
+# Midterm project: group conferences
+
+.valign-slide[
+* I will meet with Team 1 first, then Team 2.
+
+* While your team is not conferencing with me, use the time to work on your project.
+
+* Your team should have a plan on how you will work on the project over the weekend, so that everyone has a rough draft for their part of the **Exploratory Data Analysis** section of the report
+]
+
+---
+
+class: middle, center, inverse
+
+# Questions on course material to date
+
+---
+
+# `ggplot2`: Changing the viewing window
+
+```{r iris-petals-plot}
+as_data_frame(iris) %>%
+  ggplot() +
+  geom_point(
+    mapping = aes(x = Petal.Length, y = Petal.Width, color = Species)
+  )
+```
+
+---
+
+# `ggplot2`: Changing the viewing window
+
+```{r iris-zoom-view-window}
+as_data_frame(iris) %>%
+  ggplot() +
+  geom_point(
+    mapping = aes(x = Petal.Length, y = Petal.Width, color = Species)
+  ) +
+  coord_cartesian(xlim = combine(2.5, 7), ylim = combine(0.75, 2.75))
+```
+
+---
+
+# `ggplot2`: Save the image to disk
+
+Immediately after you create a plot:
+
+```r
+as_data_frame(iris) %>%
+  ggplot() +
+  geom_point(
+    mapping = aes(x = Petal.Length, y = Petal.Width, color = Species)
+  ) +
+  coord_cartesian(xlim = combine(2.5, 7), ylim = combine(0.75, 2.75))
+```
+
+Run `ggsave()` as follows to save the image to disk:
+
+```r
+ggsave("iris_petal_width_vs_length.png", dpi = 120)
+```
+
+Increase the `dpi` input to increase the figure's resolution.
+
+---
+
+# `dplyr`: Rename columns
+
+```{r dplyr-example-rename-columns}
+iris_df <- as_data_frame(iris) %>%
+  rename(
+    petal_length = Petal.Length,
+    petal_width = Petal.Width,
+    sepal_length = Sepal.Length,
+    sepal_width = Sepal.Width,
+    species = Species
+  )
+```
+
+```{r dplyr-example-rename-columns-table, echo = FALSE}
+iris_df %>%
+  head(5) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+# `dplyr`: Recode categorical levels
+
+```r
+college
+```
+
+```{r dplyr-example-college-categories, echo = FALSE}
+college %>%
+  head(5) %>%
+  select(UNITID:ZIP) %>%
+  knitr::kable(format = "html")
+```
+
+---
+
+count: false
+
+# `dplyr`: Recode categorical levels
+
+```r
+college %>%
+  mutate(
+    STABBR = recode(STABBR, AL = "Alabama")
+  )
+```
+
+```{r dplyr-example-recode-categories, echo = FALSE}
+college %>%
+  mutate(
+    STABBR = recode(STABBR, AL = "Alabama")
+  ) %>%
+  head(5) %>%
+  select(UNITID:ZIP) %>%
+  knitr::kable(format = "html")
+```
